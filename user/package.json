@@ -1,5 +1,5 @@
 {
-  "name": "user",
+  "name": "workshop-prod",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,12 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/three": "^0.176.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "@ar-js-org/ar.js": "^3.4.7",
+    "three": "^0.176.0"
   }
 }
