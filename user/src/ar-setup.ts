@@ -60,7 +60,7 @@ export function initializeAR(
 	scene.add(markerRoot);
 	
 	// カメラの前方3メートルに配置
-	markerRoot.position.set(0, 0, -3);
+	markerRoot.position.set(0, 0, -30);
 	
 	// マーカー検出は使わないため、マーカーコントロールは作成しない
 	// 代わりにダミーのイベントを発火させるための実装

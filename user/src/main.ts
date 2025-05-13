@@ -1,7 +1,7 @@
 // src/main.ts
 import * as THREE from 'three';
 import { initializeAR } from './ar-setup';
-import { launchFirework, updateFireworks } from './fireworks';
+import { launchFirework, launchPeonyFirework, updateFireworks } from './fireworks';
 
 // 1. Three.jsシーンの初期化
 const scene = new THREE.Scene();
@@ -30,8 +30,9 @@ function animate(time: number) {
   requestAnimationFrame(animate);
   
   // マーカーの有無に関わらず花火を打ち上げる
-  if (Date.now() - lastLaunchTime > launchInterval) {
-    launchFirework(scene, markerRoot);
+  if (Date.now() - lastLaunchTime > launchInterval / 2) {
+    // launchFirework(scene, markerRoot);
+    launchPeonyFirework(scene, markerRoot); // 牡丹花火を打ち上げ
     console.log('Firework launched!');
     lastLaunchTime = Date.now();
   }
