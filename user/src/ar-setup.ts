@@ -25,7 +25,7 @@ export function initializeAR(
 	scene: THREE.Scene,
 	camera: THREE.Camera,
 	renderer: THREE.WebGLRenderer
-): { arToolkitSource: ARToolkitSource; arToolkitContext: any; markerRoot: THREE.Group } {
+): { arToolkitSource: ARToolkitSource; arToolkitContext: any; markerRoot: THREE.Group; videoTexture: THREE.VideoTexture } {
 	// コンソールでTHREExオブジェクトの内容を確認（デバッグ用）
 	console.log('THREEx available:', window.THREEx);
 	
@@ -69,8 +69,15 @@ export function initializeAR(
 		dummyEventTarget.addEventListener(eventName, callback as EventListener);
 	};
 	
-	// シーンを常に表示
-	scene.visible = true;
+	// // シーンを常に表示
+	// scene.visible = true;
 	
-	return { arToolkitSource, arToolkitContext, markerRoot };
+	// ARカメラ映像のテクスチャ化
+	const videoElement = arToolkitSource.domElement as HTMLVideoElement;
+	const videoTexture = new THREE.VideoTexture(videoElement);
+	videoTexture.minFilter = THREE.LinearFilter;
+	videoTexture.magFilter = THREE.LinearFilter;
+	videoTexture.format = THREE.RGBAFormat; // または RGBFormat
+	
+	return { arToolkitSource, arToolkitContext, markerRoot, videoTexture };
 }

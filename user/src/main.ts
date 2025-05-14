@@ -25,14 +25,14 @@ renderer.toneMappingExposure = 1.2; // ブルームが映えるように露出�
 document.getElementById('ar-canvas-container')?.appendChild(renderer.domElement);
 
 // 2. ARの初期化
-const { arToolkitSource, arToolkitContext, markerRoot } = initializeAR(scene, camera, renderer);
+const { arToolkitSource, arToolkitContext, markerRoot, videoTexture } = initializeAR(scene, camera, renderer);
 
-// 2.1. ARカメラ映像のテクスチャ化
-const videoElement = arToolkitSource.domElement as HTMLVideoElement;
-const videoTexture = new THREE.VideoTexture(videoElement);
-videoTexture.minFilter = THREE.LinearFilter;
-videoTexture.magFilter = THREE.LinearFilter;
-videoTexture.format = THREE.RGBAFormat; // または RGBFormat
+// // 2.1. ARカメラ映像のテクスチャ化
+// const videoElement = arToolkitSource.domElement as HTMLVideoElement;
+// const videoTexture = new THREE.VideoTexture(videoElement);
+// videoTexture.minFilter = THREE.LinearFilter;
+// videoTexture.magFilter = THREE.LinearFilter;
+// videoTexture.format = THREE.RGBAFormat; // または RGBFormat
 
 // 3. ポストプロセッシング
 const composer = new EffectComposer(renderer);
