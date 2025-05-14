@@ -38,6 +38,31 @@ let lastLaunchTime = 0;
 const launchInterval = 5000; // 5秒ごとに花火 (ミリ秒)
 // const textureLoader = new THREE.TextureLoader();
 
+// -- お絵描き花火 --
+const vertices: number[] = [];  // 頂点座標を格納する配列
+// 各行ごとにカンマで区切った文字列を要素とした二次元配列を生成
+for (let i = 0; i < binaryFireworksDataArray[0].length; i++) {
+  // console.log(result[i]);
+  binaryFireworksDataArray[0][i].forEach((row, j) => {
+    if (row === 1) {
+      // console.log("row: " + i + ", col: " + j + ", value: " + row);
+      vertices.push(
+        -8 + 0.05 * j,
+        8 -0.05 * i,
+        -30);
+    }
+  });
+}
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+const material = new THREE.PointsMaterial({
+  color: 0xEAC011,
+  size: 0.2,
+});
+const fireWorksBinary = new THREE.Points(geometry, material);
+scene.add(fireWorksBinary);
+
+
 // 5. アニメーションループ
 function animate(time: number) {
   requestAnimationFrame(animate);
@@ -58,6 +83,25 @@ function animate(time: number) {
   }
   
   updateFireworks(scene); // 花火のアニメーション更新
+  
+  
+  // -- バイナリ花火 -- 
+  const g = 9.8; // 重力加速度
+  const t = (Date.now() - lastLaunchTime) / 1000; // 時間を秒単位で取得
+  const newVertices: number[] = [];  // 頂点座標を格納する配列
+  // 各行ごとにカンマで区切った文字列を要素とした二次元配列を生成
+  for (let i = 0; i < binaryFireworksDataArray[0].length; i++) {
+    binaryFireworksDataArray[0][i].map((row, j) => {
+      if (row === 1) {
+        // console.log("row: " + i + ", col: " + j);
+        newVertices.push(
+          -8 * t + 0.05 * j * t,
+          (18 - g * t) * t - 0.05 * i * t,
+          -30);
+      }
+    });
+  }
+  fireWorksBinary.geometry.setAttribute('position', new THREE.Float32BufferAttribute(newVertices, 3));
   
   // renderer.clear(); // 画面をクリア
   // renderer.render(scene, camera);
@@ -93,9 +137,9 @@ async function getBinaryFireworksDataArray(): Promise<number[][][]> {
     "demo_csv/44thlogo_small.csv",
   ];
   
-  // 順不同でCSVファイルを読み込む
-  // for (const csvFilePath of csvFilePathes) { // 順番にCSVファイルを読み込む場合はこっち
-  await Promise.all(csvFilePathes.map(async (csvFilePath) => {
+  // CSVファイルを読み込む
+  // for (const csvFilePath of csvFilePathes) { // 順番に読み込む
+  await Promise.all(csvFilePathes.map(async (csvFilePath) => { // 並列に読み込む
     const csv = await getCSVText(csvFilePath);  // CSVファイルを読み込む
     
     result.push(csv.split("\n")         // レスポンスを改行で分割
