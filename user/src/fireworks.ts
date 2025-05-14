@@ -121,7 +121,7 @@ export function launchPeonyFirework(scene: THREE.Scene, parentObject: THREE.Obje
 	particles.userData.lifespans = [];
 	
 	// 花火の中心点
-	const center = new THREE.Vector3(0, 1, 0); // 少し上方向に配置
+	const center = new THREE.Vector3(0, 1, -30); // 少し上方向に配置
 	let i = 0;
 	
 	for (let theta = 0; theta < 2 * Math.PI; theta += 2 * Math.PI / segments) {
@@ -154,7 +154,8 @@ export function launchPeonyFirework(scene: THREE.Scene, parentObject: THREE.Obje
 	particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 	
 	// パーティクルシステムを親オブジェクトに追加
-	parentObject.add(particles);
+	// parentObject.add(particles);
+	scene.add(particles);
 	
 	// 花火の打ち上げ効果音（実装する場合）
 	// const sound = new Audio('path/to/firework-sound.mp3');

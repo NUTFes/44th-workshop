@@ -69,9 +69,6 @@ export function initializeAR(
 		dummyEventTarget.addEventListener(eventName, callback as EventListener);
 	};
 	
-	// // シーンを常に表示
-	// scene.visible = true;
-	
 	// ARカメラ映像のテクスチャ化
 	const videoElement = arToolkitSource.domElement as HTMLVideoElement;
 	const videoTexture = new THREE.VideoTexture(videoElement);
