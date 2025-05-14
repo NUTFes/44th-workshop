@@ -1,13 +1,17 @@
 // src/main.ts
 import * as THREE from 'three';
 import { initializeAR } from './ar-setup';
-import { launchFirework, launchPeonyFirework, updateFireworks } from './fireworks';
+import { launchPeonyFirework, updateFireworks } from './fireworks/fireworks';
 import { initializeComposer } from './composer-setup';
 
 // 1. Three.jsシーンの初期化
 const scene = new THREE.Scene();
 const camera = new THREE.Camera(); // AR.jsがカメラを制御
 scene.add(camera);
+
+// お絵描き花火のバイナリデータ(2次元配列)を格納する3次元配列
+const binaryFireworksDataArray = await getBinaryFireworksDataArray(); // CSVファイルを読み込む
+// console.log(binaryFireworksDataArray);
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -78,3 +82,48 @@ window.addEventListener('resize', () => {
     camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
   }
 });
+
+// お絵描き花火のバイナリデータを読み込む関数(後でキャッシュから読み込むものに置き換える)
+async function getBinaryFireworksDataArray(): Promise<number[][][]> {
+  const result: number[][][] = []; // レスポンスを格納する配列(3次元配列)
+  
+  // CSVファイルのパスを指定(後々キャッシュを読み込むものに置き換える)
+  const csvFilePathes = [
+    "demo_csv/44thlogo.csv",
+    "demo_csv/44thlogo_small.csv",
+  ];
+  
+  // 順不同でCSVファイルを読み込む
+  // for (const csvFilePath of csvFilePathes) { // 順番にCSVファイルを読み込む場合はこっち
+  await Promise.all(csvFilePathes.map(async (csvFilePath) => {
+    const csv = await getCSVText(csvFilePath);  // CSVファイルを読み込む
+    
+    result.push(csv.split("\n")         // レスポンスを改行で分割
+      .map((row) => row.split(",")      // 各行をカンマで分割
+      .map((num) => parseFloat(num)))); // 各要素を数値に変換して格納
+  }));
+  console.log(result);
+  return result; // 読み込んだCSVデータを返す
+}
+
+// CSVファイルを読み込む関数
+async function getCSVText(path: string): Promise<string> {
+  console.log('Start loading CSV file: ' + path);
+  return new Promise((resolve, reject) => {
+    const req = new XMLHttpRequest();
+    req.open("get", path, true);  // CSVファイルのパスを指定
+    req.send(null); // HTTPリクエストの発行
+    req.onload = () => {
+      if (req.status === 200) {
+        console.log('CSV file loaded successfully: ' + path);
+        resolve(req.responseText); // レスポンスを解決
+      }
+      else {
+        reject(new Error(`Error loading CSV file: ${req.status}`));
+      }
+    };
+    req.onerror = () => {
+      reject(new Error('Error loading CSV file'));
+    };
+  });
+}
