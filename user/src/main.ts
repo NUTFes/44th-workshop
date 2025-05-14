@@ -21,7 +21,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace; // 色空間をsRGBに設定
 renderer.toneMapping = THREE.ACESFilmicToneMapping; // トーンマッピングをACESToneMappingに設定(くっきりした色合いになる)
 renderer.toneMappingExposure = 1.2; // ブルームが映えるように露出を調整(ブルームの強さを調整)
-renderer.autoClear = false; // 手動でクリアするため自動クリアを無効に
+// renderer.autoClear = false; // 手動でクリアするため自動クリアを無効に
 document.getElementById('ar-canvas-container')?.appendChild(renderer.domElement);
 
 // 2. ARの初期化
@@ -34,14 +34,14 @@ videoTexture.minFilter = THREE.LinearFilter;
 videoTexture.magFilter = THREE.LinearFilter;
 videoTexture.format = THREE.RGBAFormat; // または RGBFormat
 
-// --- ポストプロセッシング ---
+// 3. ポストプロセッシング
 const composer = new EffectComposer(renderer);
 
-// 1. RenderPass: シーンをレンダリング
+// 3.1. RenderPass: シーンをレンダリング
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-// 2. UnrealBloomPass: ブルーム効果
+// 3.2. UnrealBloomPass: ブルーム効果
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     0.8, // strength: ブルームの強さ (調整)
@@ -50,11 +50,11 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-// 3. OutputPass: 最終出力を画面に (トーンマッピングなどを適用)
+// 3.3. OutputPass: 最終出力を画面に (トーンマッピングなどを適用)
 const outputPass = new OutputPass();
 composer.addPass(outputPass);
 
-// 4. ShaderPass: ブルーム結果とARカメラ映像を加算合成
+// 3.4. ShaderPass: ブルーム結果とARカメラ映像を加算合成
 const finalCompositeShader = {
     uniforms: {
         tDiffuse: { value: null }, // Composerが設定
@@ -89,18 +89,19 @@ const finalPass = new ShaderPass(finalCompositeShader);
 // finalPass.renderToScreen = true; // このパスが最後ならtrue (EffectComposerのデフォルトは最後のパスがtrue)
 composer.addPass(finalPass);
 
-// 環境光（少しだけ追加）
+// 3.4. 環境光（少しだけ追加）
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
-// 3. 花火打ち上げロジック
+// 4. 花火打ち上げロジック
 let lastLaunchTime = 0;
 const launchInterval = 5000; // 5秒ごとに花火 (ミリ秒)
+// const textureLoader = new THREE.TextureLoader();
 
 // マーカーがなくても花火を表示するため、常に表示状態にする
-scene.visible = true;
+// scene.visible = true;
 
-// 4. アニメーションループ
+// 5. アニメーションループ
 function animate(time: number) {
   requestAnimationFrame(animate);
   
@@ -122,14 +123,14 @@ function animate(time: number) {
   
   updateFireworks(scene); // 花火のアニメーション更新
   
-  renderer.clear(); // 画面をクリア
+  // renderer.clear(); // 画面をクリア
   
   // renderer.render(scene, camera);
   composer.render(); // ポストプロセッシングを適用してレンダリング
 }
 animate(0);
 
-// 5. ウィンドウリサイズ対応
+// 6. ウィンドウリサイズ対応
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   if (arToolkitSource) {
