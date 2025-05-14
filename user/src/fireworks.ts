@@ -96,14 +96,25 @@ export function launchPeonyFirework(scene: THREE.Scene, parentObject: THREE.Obje
 	
 	// パーティクルのサイズを大きくして、より見やすく
 	const particleMaterial = new THREE.PointsMaterial({
-		size: 1, // サイズを大きく
+		size: 0.2, // サイズを大きく
 		blending: THREE.AdditiveBlending,
-		transparent: true,
-		depthWrite: false,
+		transparent: true,	// 透明度を有効にする
+		depthWrite: false,	// 深度書き込みを無効にする
 		vertexColors: true // 頂点カラーを使用
 		// map: textureLoader.load('textures/circle_texture.png'), // カスタムのテクスチャを読み込む
 		// alphaTest: 0.5, // 透明部分を考慮して描画
 	});
+	// const particleMaterial = new THREE.MeshStandardMaterial({
+	// 	// size: 0.2, // サイズを大きく
+	// 	// blending: THREE.AdditiveBlending,	// ブレンディングモード
+	// 	// transparent: true,
+	// 	// depthWrite: false,
+	// 	// vertexColors: true, // 頂点カラーを使用
+  //   color: 0xff00ff,         // ベースカラーは白
+  //   emissive: 0xffff00,      // 発光色を黄色に (ブルームの対象になる)
+  //   emissiveIntensity: 0.1   // 発光強度 (調整)
+	// });
+	
 	
 	const particles = new THREE.Points(particlesGeometry, particleMaterial);
 	particles.userData.velocities = [];
