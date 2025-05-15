@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { initializeAR } from './ar-setup';
 import { launchPeonyFirework, updateFireworks } from './fireworks/fireworks';
 import { initializeComposer } from './composer-setup';
+import { JumpDetector } from './pose-detector';
 
 // 1. Three.jsシーンの初期化
 const scene = new THREE.Scene();
@@ -28,7 +29,7 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // 環境光（少�
 scene.add(ambientLight);
 
 // 2. ARの初期化
-const { arToolkitSource, arToolkitContext, markerRoot, videoTexture } = initializeAR(scene, camera, renderer);
+const { arToolkitSource, arToolkitContext, markerRoot, videoElement, videoTexture } = initializeAR(scene, camera, renderer);
 
 // 3. コンポーザーの初期化(ポストプロセッシングの適用)
 const composer = initializeComposer(scene, camera, renderer, videoTexture);
@@ -62,6 +63,19 @@ const material = new THREE.PointsMaterial({
 const fireWorksBinary = new THREE.Points(geometry, material);
 scene.add(fireWorksBinary);
 
+//-- ジャンプ検出の初期化(ユーザ画面に含めるかは今後の検討事項) --
+if (videoElement) {
+    const jumpDetector = new JumpDetector(videoElement);
+    jumpDetector.onJump(() => {
+        console.log('Jump event received in main.ts, launching firework!');
+        // ジャンプ検出時に花火を打ち上げる
+        launchPeonyFirework(scene, markerRoot); // 牡丹花火に変更
+        lastLaunchTime = Date.now(); // 連続打ち上げを防ぐために更新
+    });
+} else {
+    console.error('Video element not found, could not initialize JumpDetector.');
+}
+
 
 // 5. アニメーションループ
 function animate(time: number) {
@@ -85,7 +99,7 @@ function animate(time: number) {
   updateFireworks(scene); // 花火のアニメーション更新
   
   
-  // -- バイナリ花火 -- 
+  // -- お絵描き花火のアニメーション -- 
   const g = 9.8; // 重力加速度
   const t = (Date.now() - lastLaunchTime) / 1000; // 時間を秒単位で取得
   const newVertices: number[] = [];  // 頂点座標を格納する配列
