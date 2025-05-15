@@ -63,18 +63,18 @@ const material = new THREE.PointsMaterial({
 const fireWorksBinary = new THREE.Points(geometry, material);
 scene.add(fireWorksBinary);
 
-//-- ジャンプ検出の初期化(ユーザ画面に含めるかは今後の検討事項) --
-if (videoElement) {
-    const jumpDetector = new JumpDetector(videoElement);
-    jumpDetector.onJump(() => {
-        console.log('Jump event received in main.ts, launching firework!');
-        // ジャンプ検出時に花火を打ち上げる
-        launchPeonyFirework(scene, markerRoot); // 牡丹花火に変更
-        lastLaunchTime = Date.now(); // 連続打ち上げを防ぐために更新
-    });
-} else {
-    console.error('Video element not found, could not initialize JumpDetector.');
-}
+// //-- ジャンプ検出の初期化(ユーザ画面に含めるかは今後の検討事項) --
+// if (videoElement) {
+//     const jumpDetector = new JumpDetector(videoElement);
+//     jumpDetector.onJump(() => {
+//         console.log('Jump event received in main.ts, launching firework!');
+//         // ジャンプ検出時に花火を打ち上げる
+//         launchPeonyFirework(scene, markerRoot); // 牡丹花火に変更
+//         lastLaunchTime = Date.now(); // 連続打ち上げを防ぐために更新
+//     });
+// } else {
+//     console.error('Video element not found, could not initialize JumpDetector.');
+// }
 
 
 // 5. アニメーションループ

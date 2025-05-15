@@ -43,6 +43,7 @@ export class JumpDetector {
     this.start();
   }
   
+  // MediaPipe Poseの初期化
   private async start() {
     // MediaPipe Poseのカメラ設定
     // AR.jsがカメラを制御しているため、ここではvideoElementを直接渡す
@@ -55,6 +56,7 @@ export class JumpDetector {
     requestAnimationFrame(this.sendFrame.bind(this));
   }
   
+  // フレームをMediaPipe Poseに送信する
   private async sendFrame() {
     if (this.videoElement && this.videoElement.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA && this.videoElement.videoWidth > 0) {
       try {
@@ -66,12 +68,12 @@ export class JumpDetector {
     requestAnimationFrame(this.sendFrame.bind(this));
   }
   
-  
+  // ポーズ検出結果を処理する
   private onPoseResults(results: PoseResults): void {
     if (results.poseLandmarks) {
       const hip = results.poseLandmarks[23]; // 左腰のランドマーク (24でも可)
       
-      if (hip && hip.visibility && hip.visibility > 0.5) {
+      if (hip && hip.visibility && hip.visibility > 0.5) {  // 可視性が高い場合のみ処理
         const currentHipY = hip.y;
         
         if (this.lastHipY !== null) {
