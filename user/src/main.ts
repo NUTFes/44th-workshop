@@ -83,7 +83,92 @@ async function main() {
   //     console.error('Video element not found, could not initialize JumpDetector.');
   // }
 
+  // --- DeviceMotionEvent 関連の変数 ---
+  let lastTimestamp: number | null = null;
+  const currentCameraQuaternion = new THREE.Quaternion(); // カメラの現在の向きを保持 (初期は単位クォータニオン)
+  // camera.quaternion.copy(currentCameraQuaternion); // 初期値をカメラに設定
+  
+  const ROTATION_SPEED_SENSITIVITY = 0.5; // 回転速度の感度調整 (お好みで)
+  
+  // --- イベントハンドラ ---
+  // デバイスの動きに応じてカメラを回転させる関数
+  function handleDeviceMotion(event: DeviceMotionEvent) { // イベント駆動で発火するのでanimate()内での呼び出しは不要
+    if (!event.rotationRate || lastTimestamp === null) {
+      lastTimestamp = performance.now();
+      return;
+    }
 
+    const now = performance.now();
+    const dt = (now - lastTimestamp) / 1000.0; // 経過時間 (秒)
+    lastTimestamp = now;
+
+    // rotationRate は deg/s なのでラジアン/sに変換し、感度を乗算
+    const alphaRate = (event.rotationRate.alpha || 0) * THREE.MathUtils.DEG2RAD * ROTATION_SPEED_SENSITIVITY; // Z軸周り (デバイスの)
+    const betaRate = (event.rotationRate.beta || 0) * THREE.MathUtils.DEG2RAD * ROTATION_SPEED_SENSITIVITY;   // X軸周り (デバイスの)
+    const gammaRate = (event.rotationRate.gamma || 0) * THREE.MathUtils.DEG2RAD * ROTATION_SPEED_SENSITIVITY; // Y軸周り (デバイスの)
+
+    // 変化量を表す小さな回転クォータニオンを作成
+    const deltaQuaternion = new THREE.Quaternion();
+    const eulerDelta = new THREE.Euler(
+      alphaRate * dt, // X軸周りの回転量(なぜかalphaRateだと所望の動きになる)
+      betaRate * dt,  // Y軸周りの回転量(なぜかbetaRateだと所望の動きになる)
+      gammaRate * dt, // Z軸周りの回転量(なぜかgammaRateだと所望の動きになる)
+      'XYZ'           // オイラーオーダー
+    );
+    deltaQuaternion.setFromEuler(eulerDelta);
+
+    // 現在のカメラの向きに、このフレームの回転量を乗算 (ローカル回転を適用)
+    currentCameraQuaternion.multiplyQuaternions(currentCameraQuaternion, deltaQuaternion);
+    // またはワールド軸基準で回転させたい場合は preMultiply
+    // currentCameraQuaternion.premultiply(deltaQuaternion);
+
+    // カメラのクォータニオンを更新
+    camera.quaternion.copy(currentCameraQuaternion);
+
+    // (オプション) ロールを強制的に0にする (水平を保つ)
+    // これを行う場合、上記でZ軸回転を 0 にするか、適用後に補正する
+    // const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+    // euler.z = 0; // ロールを0に
+    // camera.quaternion.setFromEuler(euler);
+  }
+
+  // --- パーミッション要求 (iOS 13+ 必須) ---
+  function requestDeviceMotionPermission() {
+    if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+      // パーミッション要求のためにはbuttonのクリック等のユーザ操作を挟むが必要
+      const permissionButton = document.createElement('button');
+      permissionButton.id = 'motionPermissionButton';
+      permissionButton.innerText = 'Enable Device Motion';
+      permissionButton.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000; padding:20px; font-size:18px;';
+      document.body.appendChild(permissionButton);
+
+      permissionButton.onclick = async () => {
+        try {
+          const permissionState = await (DeviceMotionEvent as any).requestPermission();
+          if (permissionState === 'granted') {
+            window.addEventListener('devicemotion', handleDeviceMotion, true);
+            lastTimestamp = performance.now(); // イベントリスナー登録直後に初期化
+            permissionButton.remove();
+          } else {
+            alert('Device Motion permission not granted.');
+          }
+        } catch (error) {
+          console.error('Error requesting DeviceMotion permission:', error);
+          // エラー時や許可不要な環境向けのフォールバック
+          // window.addEventListener('devicemotion', handleDeviceMotion, true);
+          // lastTimestamp = performance.now();
+          // permissionButton.remove();
+        }
+      };
+    } else {
+      // 許可が不要な環境 (Androidなど)
+      window.addEventListener('devicemotion', handleDeviceMotion, true);
+      lastTimestamp = performance.now(); // 初期化
+    }
+  }
+  
+  requestDeviceMotionPermission(); // パーミッション要求を開始
+  
   // 5. アニメーションループ
   function animate(time: number) {
     requestAnimationFrame(animate);
