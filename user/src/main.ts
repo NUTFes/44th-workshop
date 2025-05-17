@@ -85,7 +85,7 @@ async function main() {
   // }
   
   // -- デバイスの向きに基づいてカメラの回転を更新する --
-  const motionControls = new DeviceMotionCameraControls(camera, 0.6); // インスタンスを作成
+  const motionControls = new DeviceMotionCameraControls(camera, 0.6); // インスタンスを作成(イベント駆動なため、animate内での呼び出しは不要)
   motionControls.requestPermissionAndStart(); // パーミッションをリクエストして開始
   
   // 5. アニメーションループ
