@@ -105,8 +105,8 @@ func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.Firew
 	reader.Close()
 
 	// リサイズ
-	const width = 54 // リサイズ後のサイズ
-	const height = 54
+	const width = 100 // リサイズ後のサイズ
+	const height = 100
 	dstRect := image.Rect(0, 0, width, height)                                     // リサイズ先の矩形を定義
 	resized := image.NewRGBA(dstRect)                                              // 新しいRGBA画像を作成
 	draw.ApproxBiLinear.Scale(resized, dstRect, img, img.Bounds(), draw.Over, nil) // 画像をリサイズ
