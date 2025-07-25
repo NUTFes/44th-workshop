@@ -1,0 +1,6 @@
+# コード生成時の設定
+package: openapi     # 生成されるGoファイルのパッケージ名
+generate:
+  - types            # ① OpenAPIの 'components/schemas' から、Goのstruct（型定義）を生成する
+  - echo-server      # ② サーバーの雛形を生成する
+output: openapi/openapi.gen.go # ③ 生成されるファイルの名前
