@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"fireworks-api-test/openapi"
-	"fireworks-api-test/usecase"
+	"workshop-api/openapi"
+	"workshop-api/usecase"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )

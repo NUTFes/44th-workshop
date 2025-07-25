@@ -10,8 +10,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"fireworks-api-test/domain"
-	"fireworks-api-test/openapi"
+	"workshop-api/domain"
+	"workshop-api/openapi"
 
 	"golang.org/x/image/draw"
 

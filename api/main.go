@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"fireworks-api-test/domain"
-	"fireworks-api-test/handler"
-	"fireworks-api-test/openapi"
-	"fireworks-api-test/usecase"
+	"workshop-api/domain"
+	"workshop-api/handler"
+	"workshop-api/openapi"
+	"workshop-api/usecase"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware" // middleware も v4 に変更
