@@ -23,30 +23,20 @@ func main() {
 	dbHost := os.Getenv("POSTGRES_HOST")
 	dbPort := os.Getenv("POSTGRES_PORT")
 	dbName := os.Getenv("POSTGRES_DB")
+
 	// DSNを構築
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, dbHost, dbPort, dbName)
+
 	// DBに接続
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
+
 	// マイグレーションを実行
 	db.AutoMigrate(
 		&domain.Firework{},
 	)
-	// 花火データを作成
-	db.Create(&domain.Firework{
-		IsShareable: true,
-		PixelData:   []byte{1, 0, 1, 0, 1, 0, 1, 0, 1, 0}, // bool スライスをバイト配列に変換
-		// PixelData: []bool{true, false, true, false, true, false, true, false, true, false}, // bool スライスを使用
-	})
-	// idが1のFireworkを取得
-	var firework domain.Firework
-	if err := db.First(&firework, 1).Error; err != nil {
-		fmt.Println("Error retrieving firework:", err)
-		return
-	}
-	fmt.Printf("Retrieved Firework: %+v\n", firework)
 	fmt.Println("migrated")
 
 	// Echoのインスタンスを作成

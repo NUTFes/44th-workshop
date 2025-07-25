@@ -60,8 +60,7 @@ func (h *fireworkHandler) CreateFirework(ctx echo.Context) error {
 	if len(files) == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "No image file provided")
 	}
-	fmt.Println("Received image file handler:", files[0].Size, files[0].Filename, files[0].Header)
-	// return echo.NewHTTPError(http.StatusNotImplemented, "CreateFirework not implemented yet")
+	fmt.Println("[handler]Received image file handler:", files[0].Size, files[0].Filename, files[0].Header)
 
 	// ファイルヘッダーをopenapi_types.Fileに変換
 	fileData, err := convertToOpenAPIFile(files[0])
