@@ -14,6 +14,7 @@ services:
     volumes:
       - ./user:/user
       - /user/node_modules # node_modulesをホストと共有しない(一敗)
+      - /user/dist
     networks:
       - app_network
   app:
