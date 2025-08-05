@@ -9,6 +9,6 @@ export default defineConfig({
     watch: {
       usePolling: true
     },
-    allowedHosts: ['.local', 'localhost', 'ebf57588d902.ngrok-free.app']
+    allowedHosts: ['.local', 'localhost', 'xxxxxxxxxxxx.ngrok-free.app']
   }
 })
