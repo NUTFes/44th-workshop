@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile.prod
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: r3f-app
+    working_dir: /user
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./user:/user
+      - /user/node_modules # node_modulesをホストと共有しない(一敗)
+    networks:
+      - app_network
+  app:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/app
+    working_dir: /app
+    command: "./start.sh"
+    networks:
+      - app_network
+  db:
+    image: postgres
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app_network
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    # openapi.yml(ルートディレクトリに配置)をマウント
+    volumes:
+      - ./openapi.yaml:/openapi.yaml
+    networks:
+      - app_network
+    environment:
+      SWAGGER_JSON: /openapi.yaml  # コンテナ内のパスを指定
+
+volumes:
+  postgres-data:
+
+networks:
+  app_network:
