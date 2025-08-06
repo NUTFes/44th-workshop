@@ -127,9 +127,9 @@ func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.Firew
 			r, g, b, _ := resized.At(x, y).RGBA()
 			gray := uint8((r + g + b) / 3 >> 8) // グレースケール化
 			if gray > threshold {
-				binaryPixels = append(binaryPixels, 0)
-			} else {
 				binaryPixels = append(binaryPixels, 1)
+			} else {
+				binaryPixels = append(binaryPixels, 0)
 			}
 		}
 	}
