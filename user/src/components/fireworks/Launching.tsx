@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, memo } from 'react'
 import { useFrame } from '@react-three/fiber'
+import Sound from '../../assets/打ち上げ花火1.mp3'
 import * as THREE from 'three'
 
 type Props = {
@@ -32,9 +33,12 @@ const Launching = memo(function Launching({
   const initTime = useRef<number | null>(null)  // シーンが配置されてからの時間を保持する変数
   
   const [isCompleted, setIsCompleted] = useState(false) // 花火の完了状態を管理
+  const audio = useRef(new Audio(Sound)) // 音声の参照を保持
   
   // マウント時とアンマウント時の処理
   useEffect(() => {
+    // 音を再生
+    audio.current.play();
     // ====== マウント時の処理 ======
     // パーティクルのgeometryを初期化
     const geometry = new THREE.BufferGeometry()
