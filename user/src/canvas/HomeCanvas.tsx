@@ -99,11 +99,11 @@ const CanvasSetup = () => {
         <Bloom
           luminanceThreshold={0.2}    // ブルームがかかる明るさの閾値 (調整: 低いほど光る)
           luminanceSmoothing={0.2}    // ブルームのスムージング(調整: 1.0で滑らか)
-          intensity={1.5}             // bloomの強さ
-          // width={window.innerWidth}    // ブルームの幅
-          // height={window.innerHeight}  // ブルームの高さ
-          // mipmapBlur={true}            // ミップマップを使用してブルームを適用
-          // resolutionScale={1.5}        // 解像度を上げる（デフォルト1）
+          intensity={0.6}             // bloomの強さ
+          width={window.innerWidth}    // ブルームの幅
+          height={window.innerHeight}  // ブルームの高さ
+          mipmapBlur={true}            // ミップマップを使用してブルームを適用
+          resolutionScale={1.5}        // 解像度を上げる（デフォルト1）
         />
       </EffectComposer>
     </>

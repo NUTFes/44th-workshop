@@ -14,7 +14,7 @@ interface HomeSceneProps {
 export default function HomeScene({ illustrationFireworks }: HomeSceneProps) {
   const explodingHeight = 10;     // 花火の打ち上げ高さ
   const explosionRadius = 1;      // 花火の爆発半径
-  const explosionColor = 'blue';  // 花火の色
+  const explosionColor = 'Yellow';  // 花火の色
   
   // 花火の打ち上げ位置を管理する状態(この配列の長さ分、花火が打ち上がる)
   const [fireworks, setFireworks] = useState<{ id: string; position: THREE.Vector3 }[]>([])

@@ -5,6 +5,7 @@ import {
 } from 'react'
 import * as THREE from 'three';
 import PeonyFireworks from '../components/fireworks/PeonyFireworks/PeonyFireworks';
+// import ChrysanthemumFireworks from '../components/fireworks/ChrysanthemumFireworks/ChrysanthemumFireworks';
 
 
 
@@ -58,6 +59,7 @@ const DetectorScene = forwardRef<DetectorSceneHandle>((_, ref) => {
     <>
       {fireworks.map((fw) => (
         <PeonyFireworks
+        // <ChrysanthemumFireworks
           key={fw.id}
           from={fw.position}  // 花火の打ち上げの始点
           to={new THREE.Vector3(fw.position.x, fw.position.y + explodingHeight, fw.position.z)} // 花火の打ち上げの終点

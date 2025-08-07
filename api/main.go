@@ -71,6 +71,7 @@ func main() {
 			"http://127.0.0.1:3000",
 			"http://localhost:5173",
 			"http://127.0.0.1:5173",
+			"https://16dbd1de098c.ngrok-free.app",
 			// "https://919cb2560aa7.ngrok-free.app",
 			// "http://localhost:4173",
 			// "http://127.0.0.1:4173",

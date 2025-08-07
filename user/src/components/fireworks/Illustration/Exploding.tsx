@@ -161,7 +161,7 @@ const IllustrationExploding =  memo(function IllustrationExploding({
       <points ref={starPointsRef}>
         <bufferGeometry />
         <pointsMaterial
-          size={0.2}
+          size={0.04}
           color={color}
           vertexColors={false}
           depthWrite={false}  // 深度書き込みを無効化
