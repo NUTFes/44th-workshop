@@ -1,17 +1,31 @@
 version: '3.8'
 
 services:
-  admin:
+  user:
+    # image: node:20-alpine
+    # platform: linux/amd64  # x86_64アーキテクチャを強制
     build:
-      context: .
-      dockerfile: ./admin/Dockerfile
-    volumes:
-      - ./admin:/app
-      - /app/node_modules # この行により、コンテナ内のnode_modulesが保護されます
+      context: ./user
+      dockerfile: Dockerfile
+      # dockerfile: Dockerfile.prod
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: r3f-app
+    working_dir: /user
     ports:
-      - "3000:3000"
-    command: npm run dev
-  
+      # Viteのデフォルトポート5173をマッピング
+      - "5173:5173"
+    # ローカルのソースコードをコンテナにマウント（同期）する
+    # これにより、ローカルでの変更が即座にコンテナに反映される
+    volumes:
+      - ./user:/user
+      - /user/node_modules # node_modulesをホストと共有しない(一敗)
+      - /user/dist
+    # 起動時に実行するコマンド
+    # 依存関係のインストールと開発サーバーの起動
+    # command: sh -c "npm install && npm run dev"
+    networks:
+      - app_network
   app:
     build:
       context: ./api

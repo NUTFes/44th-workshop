@@ -92,7 +92,14 @@ func (uc *fireworkUsecase) GetFireworkByID(ctx context.Context, id int64) (opena
 // CreateFirework は新しい花火を作成します。
 func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.FireworkCreateRequest) (openapi.FireworkResponse, error) {
 	// リクエストから画像データを取得
-	fmt.Println("[usecase]Received image file:", req.Image.Filename(), "Size:", req.Image.FileSize())
+	fmt.Println("Received image file usecase:", req.Image.Filename(), "Size:", req.Image.FileSize())
+
+	// types.Fileからファイル内容を読み取り
+	file, err := req.Image.Bytes()
+	if err != nil {
+		return openapi.FireworkResponse{}, fmt.Errorf("failed to open image file: %w", err)
+	}
+	fmt.Println("Image file size:", file)
 
 	// 画像のReaderを取得
 	reader, err := req.Image.Reader() // 画像のデコード（JPEG, PNG対応）
@@ -127,7 +134,7 @@ func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.Firew
 		}
 	}
 	fmt.Println("Binary pixel data length:", len(binaryPixels)) // デバッグ用ログ
-	// fmt.Println("Binary pixel data:", binaryPixels)             // デバッグ用ログ
+	fmt.Println("Binary pixel data:", binaryPixels)             // デバッグ用ログ
 
 	// // csvファイルの作成
 	// // ファイル作成

@@ -39,6 +39,20 @@ func main() {
 	)
 	fmt.Println("migrated")
 
+	// // 花火データを作成
+	// db.Create(&domain.Firework{
+	// 	IsShareable: true,
+	// 	PixelData:   []byte{1, 0, 1, 0, 1, 0, 1, 0, 1, 0}, // bool スライスをバイト配列に変換
+	// 	// PixelData: []bool{true, false, true, false, true, false, true, false, true, false}, // bool スライスを使用
+	// })
+	// // idが1のFireworkを取得
+	// var firework domain.Firework
+	// if err := db.First(&firework, 1).Error; err != nil {
+	// 	fmt.Println("Error retrieving firework:", err)
+	// 	return
+	// }
+	// fmt.Printf("Retrieved Firework: %+v\n", firework)
+
 	// Echoのインスタンスを作成
 	e := echo.New()
 
@@ -48,7 +62,20 @@ func main() {
 
 	// CORSの設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8081", "http://127.0.0.1:8081", "http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowOrigins: []string{
+			"http://localhost:8081",
+			"http://127.0.0.1:8081",
+			"http://localhost:8080",
+			"http://127.0.0.1:8080",
+			"http://localhost:3000",
+			"http://127.0.0.1:3000",
+			"http://localhost:5173",
+			"http://127.0.0.1:5173",
+			"https://16dbd1de098c.ngrok-free.app",
+			// "https://919cb2560aa7.ngrok-free.app",
+			// "http://localhost:4173",
+			// "http://127.0.0.1:4173",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true, // クッキーを許可
