@@ -2,9 +2,10 @@ export const customFetch = async <TData>(
   url: string,
   options: RequestInit = {}
 ): Promise<TData> => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL;  // 環境変数から取得(開発時しか有効ではない)
+  // const baseUrl = import.meta.env.VITE_API_BASE_URL;  // 環境変数から取得(開発時しか有効ではない)
   // const baseUrl = process.env.VITE_API_BASE_URL;
   // const baseUrl = "http://localhost:8080"; // 環境変数などから取得するのが望ましい
+  const baseUrl = "https://hanabi-api-stg.nutfes.net"; // ステージングのAPIベースURL
   // const baseUrl = "https://yr-tactics-widespread-codes.trycloudflare.com";
   // console.log("Base URL:", baseUrl);
   const requestUrl = new URL(url, baseUrl);
