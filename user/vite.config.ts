@@ -9,6 +9,12 @@ export default defineConfig({
     watch: {
       usePolling: true
     },
-    allowedHosts: ['.local', 'localhost', '16dbd1de098c.ngrok-free.app']
+    allowedHosts: [
+      '.local',
+      'localhost', 
+      // '16dbd1de098c.ngrok-free.app',
+      'hanabi.nutfes.net',
+      'hanabi-stg.nutfes.net',
+    ]
   }
 })
