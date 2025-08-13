@@ -60,6 +60,12 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// 環境変数から管理者画面のURLを取得
+	swaggerUrl := os.Getenv("SWAGGER_URL")
+	swaggerStgUrl := os.Getenv("SWAGGER_STG_URL")
+	fmt.Println("Swagger URL:", swaggerUrl)
+	fmt.Println("Swagger Staging URL:", swaggerStgUrl)
+
 	// CORSの設定
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{
@@ -71,12 +77,11 @@ func main() {
 			"http://127.0.0.1:3000",
 			"http://localhost:5173",
 			"http://127.0.0.1:5173",
-			"https://41664d3b51b8.ngrok-free.app",
-			"https://hanabi-stg.nutfes.net",
 			"https://hanabi.nutfes.net",
-			"https://hanabi-swagger-stg.nutfes.net",
-			"https://hanabi-swagger.nutfes.net",
-			// "https://919cb2560aa7.ngrok-free.app",
+			"https://hanabi-stg.nutfes.net",
+			swaggerUrl,
+			swaggerStgUrl,
+			// "https://41664d3b51b8.ngrok-free.app",
 			// "http://localhost:4173",
 			// "http://127.0.0.1:4173",
 		},

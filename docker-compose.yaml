@@ -8,8 +8,8 @@ services:
       context: ./user
       dockerfile: Dockerfile
       # dockerfile: Dockerfile.prod
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    # environment:
+    #   VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     container_name: r3f-app
     working_dir: /user
     ports:
@@ -36,6 +36,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_HOST: ${POSTGRES_HOST}
+      SWAGGER_URL: ${SWAGGER_URL}         # 管理者画面のURLを環境変数から取得
+      SWAGGER_STG_URL: ${SWAGGER_STG_URL} # 管理者画面のステージングURLを環境変数から取得
     ports:
       - "8080:8080"
     volumes:
