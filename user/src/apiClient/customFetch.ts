@@ -9,7 +9,7 @@ export const customFetch = async <TData>(
   // const baseUrl = process.env.VITE_API;
   // const baseUrl = "http://localhost:8080"; // 環境変数などから取得するのが望ましい
   // const baseUrl = "https://yr-tactics-widespread-codes.trycloudflare.com";
-  console.log("Base URL:", baseUrl);
+  // console.log("Base URL:", baseUrl);
   const requestUrl = new URL(url, baseUrl);
 
   const headers = {
