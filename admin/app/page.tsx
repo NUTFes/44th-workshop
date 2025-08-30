@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // Types
 interface Firework {
@@ -16,18 +16,18 @@ export default function Home() {
   const [fireworks, setFireworks] = useState<Firework[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
+  // const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isShareable, setIsShareable] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // const [isUpdating, setIsUpdating] = useState(false);
+  // const [isDeleting, setIsDeleting] = useState(false);
 
   // API URL - ブラウザからは必ず localhost を使用
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
   // Fetch all fireworks
-  const fetchFireworks = async () => {
+  const fetchFireworks = useCallback(async () => {
     setLoading(true);
     console.log('Fetching fireworks from:', API_URL);
     try {
@@ -48,7 +48,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   // Create a new firework
   const createFirework = async () => {
@@ -96,7 +96,7 @@ export default function Home() {
   useEffect(() => {
     console.log('Component mounted, fetching fireworks...');
     fetchFireworks();
-  }, []);
+  }, [fetchFireworks]);
 
   // デバッグ用：fireworksの状態をログ出力
   useEffect(() => {
