@@ -1,103 +1,236 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+
+// Types
+interface Firework {
+  id: number;
+  isShareable: boolean;
+  pixelData: boolean[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // State
+  const [fireworks, setFireworks] = useState<Firework[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isShareable, setIsShareable] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  // API URL - ブラウザからは必ず localhost を使用
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+  // Fetch all fireworks
+  const fetchFireworks = async () => {
+    setLoading(true);
+    console.log('Fetching fireworks from:', API_URL);
+    try {
+      const response = await fetch(`${API_URL}/fireworks`);
+      console.log('Response status:', response.status);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      const data = await response.json();
+      console.log('Fetched data:', data);
+
+      // データがnullまたはundefinedの場合は空配列を設定
+      setFireworks(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(`Failed to fetch fireworks: ${err instanceof Error ? err.message : String(err)}`);
+      // エラー時も空配列を設定
+      setFireworks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create a new firework
+  const createFirework = async () => {
+    if (!selectedFile) {
+      setError('Please select an image file');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      formData.append('is_shareable', isShareable.toString());
+
+      const response = await fetch(`${API_URL}/fireworks`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error ${response.status}: ${errorText}`);
+      }
+
+      await fetchFireworks();
+      setSelectedFile(null);
+      setIsShareable(false);
+      setError(null);
+    } catch (err) {
+      setError(`Failed to create firework: ${err instanceof Error ? err.message : String(err)}`);
+      console.error('Error creating firework:', err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  // Load fireworks on component mount
+  useEffect(() => {
+    console.log('Component mounted, fetching fireworks...');
+    fetchFireworks();
+  }, []);
+
+  // デバッグ用：fireworksの状態をログ出力
+  useEffect(() => {
+    console.log('Fireworks state changed:', fireworks);
+  }, [fireworks]);
+
+  const containerStyle: React.CSSProperties = {
+    minHeight: '100vh',
+    backgroundColor: '#f9fafb',
+    fontFamily: 'Arial, sans-serif',
+  };
+
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: '#4f46e5',
+    color: 'white',
+    padding: '1rem',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  };
+
+  const mainStyle: React.CSSProperties = {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '2rem',
+  };
+
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: 'white',
+    padding: '1.5rem',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    marginBottom: '1rem',
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: '#4f46e5',
+    color: 'white',
+    padding: '0.5rem 1rem',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    margin: '0.25rem',
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '0.5rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    marginBottom: '1rem',
+  };
+
+  return (
+      <div style={containerStyle}>
+        <header style={headerStyle}>
+          <h1>Fireworks Admin Dashboard</h1>
+        </header>
+
+        <main style={mainStyle}>
+          {error && (
+              <div style={{
+                backgroundColor: '#fee2e2',
+                borderLeft: '4px solid #ef4444',
+                color: '#dc2626',
+                padding: '1rem',
+                marginBottom: '1rem',
+              }}>
+                <p>{error}</p>
+                <button
+                    onClick={() => setError(null)}
+                    style={{ ...buttonStyle, backgroundColor: '#dc2626' }}
+                >
+                  Dismiss
+                </button>
+              </div>
+          )}
+
+          <div style={cardStyle}>
+            <h2>Fireworks List</h2>
+            {loading ? (
+                <p>Loading...</p>
+            ) : !fireworks || fireworks.length === 0 ? (
+                <p>No fireworks found</p>
+            ) : (
+                <div>
+                  {fireworks.map((firework) => (
+                      <div key={firework.id} style={{
+                        border: '1px solid #e5e7eb',
+                        padding: '0.5rem',
+                        marginBottom: '0.5rem',
+                        borderRadius: '4px',
+                      }}>
+                        <strong>ID: {firework.id}</strong> -
+                        Shareable: {firework.isShareable ? 'Yes' : 'No'} -
+                        Created: {firework.createdAt ? new Date(firework.createdAt).toLocaleDateString() : 'N/A'}
+                      </div>
+                  ))}
+                </div>
+            )}
+
+            <h3>Add New Firework</h3>
+            <div>
+              <label>
+                Image:
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={inputStyle}
+                />
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                <input
+                    type="checkbox"
+                    checked={isShareable}
+                    onChange={(e) => setIsShareable(e.target.checked)}
+                    style={{ marginRight: '0.5rem' }}
+                />
+                Shareable
+              </label>
+
+              <button
+                  onClick={createFirework}
+                  disabled={!selectedFile || isCreating}
+                  style={{
+                    ...buttonStyle,
+                    opacity: (!selectedFile || isCreating) ? 0.5 : 1,
+                  }}
+              >
+                {isCreating ? 'Creating...' : 'Create Firework'}
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
   );
 }

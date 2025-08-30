@@ -1,77 +1,93 @@
-version: '3.8'
-
 services:
   user:
-    # image: node:20-alpine
-    # platform: linux/amd64  # x86_64アーキテクチャを強制
     build:
       context: ./user
       dockerfile: Dockerfile
-      # dockerfile: Dockerfile.prod
-    # environment:
-    #   VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     container_name: r3f-app
     working_dir: /user
     ports:
-      # Viteのデフォルトポート5173をマッピング
       - "5173:5173"
-    # ローカルのソースコードをコンテナにマウント（同期）する
-    # これにより、ローカルでの変更が即座にコンテナに反映される
     volumes:
       - ./user:/user
-      - /user/node_modules # node_modulesをホストと共有しない(一敗)
+      - /user/node_modules
       - /user/dist
-    # 起動時に実行するコマンド
-    # 依存関係のインストールと開発サーバーの起動
-    # command: sh -c "npm install && npm run dev"
     networks:
       - app_network
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: admin-app
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    networks:
+      - app_network
+    depends_on:
+      - app
+
   app:
     build:
       context: ./api
       dockerfile: Dockerfile
     environment:
-      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_HOST: ${POSTGRES_HOST}
-      SWAGGER_URL: ${SWAGGER_URL}         # 管理者画面のURLを環境変数から取得
-      SWAGGER_STG_URL: ${SWAGGER_STG_URL} # 管理者画面のステージングURLを環境変数から取得
+      SWAGGER_URL: ${SWAGGER_URL}
+      SWAGGER_STG_URL: ${SWAGGER_STG_URL}
     ports:
       - "8080:8080"
     volumes:
       - ./api:/app
     working_dir: /app
-    command: "./start.sh"
+    command: sh -c "go mod tidy && go run main.go"
     networks:
       - app_network
+    depends_on:
+      - db
+
   db:
-    image: postgres
+    image: postgres:15
     container_name: postgres
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     ports:
-      - ${POSTGRES_PORT}:5432
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   swagger-ui:
     image: swaggerapi/swagger-ui
     restart: unless-stopped
     ports:
       - "8081:8080"
-    # openapi.yml(ルートディレクトリに配置)をマウント
     volumes:
       - ./openapi.yaml:/openapi.yaml
     networks:
       - app_network
     environment:
-      SWAGGER_JSON: /openapi.yaml  # コンテナ内のパスを指定
+      SWAGGER_JSON: /openapi.yaml
 
 volumes:
   postgres-data:
