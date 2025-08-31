@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Types
 interface Firework {
@@ -16,12 +16,9 @@ export default function Home() {
   const [fireworks, setFireworks] = useState<Firework[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isShareable, setIsShareable] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  // const [isUpdating, setIsUpdating] = useState(false);
-  // const [isDeleting, setIsDeleting] = useState(false);
 
   // API URL - ブラウザからは必ず localhost を使用
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -33,7 +30,15 @@ export default function Home() {
     try {
       const response = await fetch(`${API_URL}/fireworks`);
       console.log('Response status:', response.status);
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+
+      if (!response.ok) {
+        const errorMessage = `HTTP error ${response.status}`;
+        console.error('Fetch failed:', errorMessage);
+        setError(`Failed to fetch fireworks: ${errorMessage}`);
+        setFireworks([]);
+        return;
+      }
+
       const data = await response.json();
       console.log('Fetched data:', data);
 
@@ -42,7 +47,8 @@ export default function Home() {
       setError(null);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(`Failed to fetch fireworks: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`Failed to fetch fireworks: ${errorMessage}`);
       // エラー時も空配列を設定
       setFireworks([]);
     } finally {
@@ -51,7 +57,7 @@ export default function Home() {
   }, [API_URL]);
 
   // Create a new firework
-  const createFirework = async () => {
+  const createFirework = useCallback(async () => {
     if (!selectedFile) {
       setError('Please select an image file');
       return;
@@ -70,7 +76,10 @@ export default function Home() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP error ${response.status}: ${errorText}`);
+        const errorMessage = `HTTP error ${response.status}: ${errorText}`;
+        console.error('Create failed:', errorMessage);
+        setError(`Failed to create firework: ${errorMessage}`);
+        return;
       }
 
       await fetchFireworks();
@@ -78,19 +87,20 @@ export default function Home() {
       setIsShareable(false);
       setError(null);
     } catch (err) {
-      setError(`Failed to create firework: ${err instanceof Error ? err.message : String(err)}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`Failed to create firework: ${errorMessage}`);
       console.error('Error creating firework:', err);
     } finally {
       setIsCreating(false);
     }
-  };
+  }, [selectedFile, isShareable, API_URL, fetchFireworks]);
 
   // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
     }
-  };
+  }, []);
 
   // Load fireworks on component mount
   useEffect(() => {
