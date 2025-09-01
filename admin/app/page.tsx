@@ -22,6 +22,7 @@ export default function Home() {
   const [isShareable, setIsShareable] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [originalImageFiles, setOriginalImageFiles] = useState<Map<number, File>>(new Map());
 
   // API URL - ブラウザからは必ず localhost を使用
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -107,6 +108,13 @@ export default function Home() {
         return;
       }
 
+      const result = await response.json();
+
+      // 作成された花火のIDに対してオリジナルファイルを保存
+      if (result && result.id) {
+        setOriginalImageFiles(prev => new Map(prev).set(result.id, selectedFile));
+      }
+
       await fetchFireworks();
       setSelectedFile(null);
       setIsShareable(false);
@@ -151,6 +159,12 @@ export default function Home() {
       if (selectedFirework?.id === fireworkId) {
         setSelectedFirework(null);
       }
+      // オリジナルファイルも削除
+      setOriginalImageFiles(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(fireworkId);
+        return newMap;
+      });
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -371,7 +385,10 @@ export default function Home() {
                     <QRCode
                         url={generateQRUrl(selectedFirework)}
                         size={200}
+                        fireworkId={selectedFirework.id}
+                        originalImageFile={originalImageFiles.get(selectedFirework.id)}
                         onDownload={handleQRDownload}
+                        onError={(error) => setError(error)}
                     />
 
                     <div style={{
@@ -401,6 +418,7 @@ export default function Home() {
                         <div><strong>Created:</strong> {selectedFirework.createdAt ? new Date(selectedFirework.createdAt).toLocaleString() : 'N/A'}</div>
                         <div><strong>Updated:</strong> {selectedFirework.updatedAt ? new Date(selectedFirework.updatedAt).toLocaleString() : 'N/A'}</div>
                         <div><strong>Pixel Data:</strong> {selectedFirework.pixelData?.length || 0} pixels</div>
+                        <div><strong>Original Image:</strong> {originalImageFiles.has(selectedFirework.id) ? 'Available' : 'Not available'}</div>
                       </div>
                     </div>
 
