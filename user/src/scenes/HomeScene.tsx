@@ -1,6 +1,10 @@
-import { useState } from 'react'
+import { 
+  useState, 
+  forwardRef, 
+  useImperativeHandle, 
+} from 'react'
 import * as THREE from 'three';
-import HtmlButton from '../components/common/HtmlButton';
+// import HtmlButton from '../components/common/HtmlButton';
 import IllustrationFireworks from '../components/fireworks/Illustration/IllustrationFireworks';
 import type { IllustrationFireworksType } from '../types/illustrationFireworksType';
 
@@ -8,10 +12,16 @@ interface HomeSceneProps {
   illustrationFireworks: IllustrationFireworksType; // イラスト花火のデータ
 }
 
+// コンポーネントの外部から呼び出せる関数を定義
+export type HomeSceneHandle = {
+  handleLaunch: () => void; // 花火を打ち上げる関数
+}
+
 // ===== HomeSceneコンポーネント =====
 // Three.js空間の「中身（オブジェクト）」を構成する
 // HTMLボタンはpageに置くべきだが、面倒なのでここに置く
-export default function HomeScene({ illustrationFireworks }: HomeSceneProps) {
+const HomeScene = forwardRef<HomeSceneHandle, HomeSceneProps>(( props, ref) => {
+  const {illustrationFireworks} = props;
   const explodingHeight = 10;     // 花火の打ち上げ高さ
   const explosionRadius = 1;      // 花火の爆発半径
   const explosionColor = 'Yellow';  // 花火の色
@@ -19,6 +29,11 @@ export default function HomeScene({ illustrationFireworks }: HomeSceneProps) {
   // 花火の打ち上げ位置を管理する状態(この配列の長さ分、花火が打ち上がる)
   const [fireworks, setFireworks] = useState<{ id: string; position: THREE.Vector3 }[]>([])
   console.log('Fireworks:', fireworks)
+  
+  // コンポーネントの外部から呼び出せる関数を定義
+  useImperativeHandle(ref, () => ({
+    handleLaunch,
+  }));
   
   // ボタンをクリックしたときに花火を発射する関数
   const handleLaunch = () => {
@@ -54,7 +69,9 @@ export default function HomeScene({ illustrationFireworks }: HomeSceneProps) {
           onComplete={() => onFinished(fw.id)}    // 花火が終了したときのコールバック
         />
       ))}
-      <HtmlButton onClick={handleLaunch} />
+      {/* <HtmlButton onClick={handleLaunch} /> */}
     </>
   )
-}
+});
+
+export default HomeScene;
