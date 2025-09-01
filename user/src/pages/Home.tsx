@@ -162,23 +162,42 @@ export default function Home() {
       >
         QRコードをスキャン
       </button>
-      <button
-        onClick={() => handleLaunch()} // 花火を打ち上げる
-        style={{
-          width: 'auto',
-          padding: '4px 8px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          // marginTop: '20px',
-          position: 'absolute',
-          bottom: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',  // 水平方向中央配置
-          // zIndex: 500,
-        }}
-      >
-        花火を打ち上げる
-      </button>
+      {illustrationFireworks?
+        <button
+          onClick={() => handleLaunch()} // 花火を打ち上げる
+          style={{
+            width: 'auto',
+            padding: '4px 8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            // marginTop: '20px',
+            position: 'absolute',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',  // 水平方向中央配置
+            // zIndex: 500,
+          }}
+        >
+          花火を打ち上げる
+        </button>
+        : <div 
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+            width: 'auto',
+            padding: '4px 8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            // marginTop: '20px',
+            position: 'absolute',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',  // 水平方向中央配置
+            // zIndex: 500,
+          }}>
+          花火が読み込めませんでした<br />
+          別のQRコードをスキャンしてください
+        </div>
+      }
       <ScanModal
         isOpen={isOpen} // モーダルの開閉状態を渡す
         onScan={onScan} // QRコードスキャン時のコールバック関数を渡す
