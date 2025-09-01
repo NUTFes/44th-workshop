@@ -117,6 +117,7 @@ func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.Firew
 	dstRect := image.Rect(0, 0, width, height)                                     // リサイズ先の矩形を定義
 	resized := image.NewRGBA(dstRect)                                              // 新しいRGBA画像を作成
 	draw.ApproxBiLinear.Scale(resized, dstRect, img, img.Bounds(), draw.Over, nil) // 画像をリサイズ
+	rotated := rotate90Right(resized)                                              // 画像を90度回転
 
 	// 2値化 + []byte に変換（白：1, 黒：0）
 	threshold := uint8(128)                       // グレースケール化の閾値
@@ -124,12 +125,12 @@ func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.Firew
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			r, g, b, _ := resized.At(x, y).RGBA()
+			r, g, b, _ := rotated.At(x, y).RGBA()
 			gray := uint8((r + g + b) / 3 >> 8) // グレースケール化
 			if gray > threshold {
-				binaryPixels = append(binaryPixels, 1)
-			} else {
 				binaryPixels = append(binaryPixels, 0)
+			} else {
+				binaryPixels = append(binaryPixels, 1)
 			}
 		}
 	}
@@ -224,6 +225,23 @@ func (uc *fireworkUsecase) UpdateFirework(ctx context.Context, id int64, req ope
 	}
 
 	return response, nil
+}
+
+// 画像を90度回転するヘルパー関数
+func rotate90Right(img image.Image) *image.RGBA {
+	srcBounds := img.Bounds()
+	w, h := srcBounds.Dx(), srcBounds.Dy()
+
+	// 90度右回転した画像は (h, w) サイズになる
+	dst := image.NewRGBA(image.Rect(0, 0, h, w))
+
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			// (x, y) → (h-1-y, x)
+			dst.Set(h-1-y, x, img.At(x, y))
+		}
+	}
+	return dst
 }
 
 // boolスライスをbyteスライスに変換するヘルパー関数
