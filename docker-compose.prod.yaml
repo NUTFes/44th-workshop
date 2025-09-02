@@ -17,6 +17,24 @@ services:
       - /user/dist
     networks:
       - app_network
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: admin-app
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_BASE_URL}
+    networks:
+      - app_network
+    depends_on:
+      - app
   app:
     build:
       context: ./api
