@@ -4,6 +4,7 @@ import {
 } from 'react-router-dom'
 import { 
   useEffect,
+  useRef,
 } from 'react'
 import type { IllustrationFireworksType } from '../types/illustrationFireworksType';
 import { 
@@ -12,6 +13,7 @@ import {
 } from '../lib/localstorage';
 import { useGetFireworkById } from '../apiClient/fireworks/myARProjectAPI';
 import ScanModal from '../components/common/ScanModal';
+import type { HomeCanvasHandle } from '../canvas/HomeCanvas';
 
 import HomeCanvas from "../canvas/HomeCanvas";
 
@@ -24,10 +26,12 @@ export default function Home() {
   const [isOpen, setIsOpen] = useState(false)
   // クエリパラメータを管理する状態
   const [searchParams, setSearchParams] = useSearchParams()
-  
+  // HomeCanvasへの参照を作成
+  const homeCanvasRef = useRef<HomeCanvasHandle>(null);
+
   // URLパラメータからIDを取得
-  const currentId = searchParams.get('id') || '0'
-  const validId = !isNaN(Number(currentId)) ? currentId : '0'
+  const currentId = searchParams.get('id') || '1'
+  const validId = !isNaN(Number(currentId)) ? currentId : '1'
   console.log('ID from URL:', validId)
   
   // APIから花火データを取得（条件付きで有効化）
@@ -128,28 +132,72 @@ export default function Home() {
       console.error('Error fetching fireworks data:', error)
     }
   }, [isLoading, error])
-  
+
+  // 花火を打ち上げる関数
+  const handleLaunch = () => {
+    homeCanvasRef.current?.handleLaunch();
+  };
+
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
       {/* イラスト花火のデータが読み込まれた場合はHomeCanvasを表示 */}
       <HomeCanvas
         illustrationFireworks={illustrationFireworks} // イラスト花火のデータを渡す
+        ref={homeCanvasRef} // HomeCanvasへの参照を渡す
       />
       <button
         onClick={() => setIsOpen(true)} // モーダルを開く
         style={{
-          padding: '10px 20px',
+          width: 'auto',
+          padding: '4px 8px',
           fontSize: '16px',
           cursor: 'pointer',
-          marginTop: '20px',
+          // marginTop: '20px',
           position: 'absolute',
           bottom: '20px',
           left: '50%',
+          transform: 'translateX(-50%)',  // 水平方向中央配置
           // zIndex: 500,
         }}
       >
         QRコードをスキャン
       </button>
+      {illustrationFireworks?
+        <button
+          onClick={() => handleLaunch()} // 花火を打ち上げる
+          style={{
+            width: 'auto',
+            padding: '4px 8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            // marginTop: '20px',
+            position: 'absolute',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',  // 水平方向中央配置
+            // zIndex: 500,
+          }}
+        >
+          花火を打ち上げる
+        </button>
+        : <div 
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.6)',
+            width: 'auto',
+            padding: '4px 8px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            // marginTop: '20px',
+            position: 'absolute',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',  // 水平方向中央配置
+            // zIndex: 500,
+          }}>
+          花火が読み込めませんでした<br />
+          別のQRコードをスキャンしてください
+        </div>
+      }
       <ScanModal
         isOpen={isOpen} // モーダルの開閉状態を渡す
         onScan={onScan} // QRコードスキャン時のコールバック関数を渡す

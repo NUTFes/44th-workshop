@@ -15,9 +15,17 @@ export default function QrScanner ({ onScan }: Props) {
 
   return (
     <>
-      <video ref={ref as React.RefObject<HTMLVideoElement>} />
+      <video 
+        ref={ref as React.RefObject<HTMLVideoElement>} 
+        style={{
+          // width: '100%',
+          // height: '80%',
+          // objectFit: 'cover',
+          overflow: 'hidden',
+        }}
+      />
       <p>
-        <span>Last result:</span>
+        {/* <span>Last result:</span> */}
         <span>{result}</span>
       </p>
     </>

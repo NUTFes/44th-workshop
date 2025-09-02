@@ -3,6 +3,9 @@ import {
   Suspense,
   useEffect,
   useMemo,
+  forwardRef, 
+  useImperativeHandle, 
+  useRef,
 } from 'react'
 import { 
   Canvas,
@@ -13,9 +16,15 @@ import * as THREE from 'three';
 import HomeScene from '../scenes/HomeScene';
 import type { IllustrationFireworksType } from '../types/illustrationFireworksType';
 import { useDeviceMotionCamera } from './hooks/useDeviceMotionCamera';
+import type { HomeSceneHandle } from '../scenes/HomeScene';
 
 interface HomeCanvasProps {
   illustrationFireworks: IllustrationFireworksType | null; // イラスト花火のデータ
+}
+
+// コンポーネントの外部から呼び出せる関数を定義
+export type HomeCanvasHandle = {
+  handleLaunch: () => void; // 花火を打ち上げる関数
 }
 
 // ===== HomeCanvas =====
@@ -25,8 +34,21 @@ interface HomeCanvasProps {
 // - レンダラー（マルチレンダーやポストプロセス）
 // - orbit controls などの操作系
 // - MediaPipe連携（Webカメラ映像→Three.jsへ）
-export default function HomeCanvas({ illustrationFireworks }: HomeCanvasProps) {
+const HomeCanvas = forwardRef<HomeCanvasHandle, HomeCanvasProps>(( props, ref) => {
   console.log('HomeCanvas rendered');
+  const { illustrationFireworks } = props;
+  const homeSceneRef = useRef<HomeSceneHandle>(null);
+
+  // コンポーネントの外部から呼び出せる関数を定義
+  useImperativeHandle(ref, () => ({
+    handleLaunch,
+  }));
+  
+  // 花火を打ち上げる関数
+  const handleLaunch = () => {
+    // HomeSceneの花火を打ち上げる関数を呼び出す
+    homeSceneRef.current?.handleLaunch();
+  };
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -40,13 +62,16 @@ export default function HomeCanvas({ illustrationFireworks }: HomeCanvasProps) {
           {illustrationFireworks && (
             <HomeScene
               illustrationFireworks={illustrationFireworks} // イラスト花火のデータを渡す
+              ref={homeSceneRef} // HomeSceneへの参照を渡す
             />
           )}
         </Suspense>
       </Canvas>
     </div>
   )
-}
+});
+
+export default HomeCanvas;
 
 // Canvasの初期設定(useThreeはcanvas内でのみ使用可能なため切り分けている)
 const CanvasSetup = () => {

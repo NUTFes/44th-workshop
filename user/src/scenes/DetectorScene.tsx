@@ -19,11 +19,11 @@ export type DetectorSceneHandle = {
 // HTMLボタンはpageに置くべきだが、面倒なのでここに置く
 const DetectorScene = forwardRef<DetectorSceneHandle>((_, ref) => {
   const explodingHeight = 10;     // 花火の打ち上げ高さ
-  const explosionRadius = 1;      // 花火の爆発半径
-  const explosionColor = 'blue';  // 花火の色
-  
+  const explosionRadius = 0.7;      // 花火の爆発半径
+  const layers = 1;                  // 花弁の層数
+
   // 花火の打ち上げ位置を管理する状態(この配列の長さ分、花火が打ち上がる)
-  const [fireworks, setFireworks] = useState<{ id: string; position: THREE.Vector3 }[]>([])
+  const [fireworks, setFireworks] = useState<{ id: string; position: THREE.Vector3, color?: THREE.Color }[]>([])
   console.log('Fireworks:', fireworks)
   
   
@@ -37,6 +37,8 @@ const DetectorScene = forwardRef<DetectorSceneHandle>((_, ref) => {
   const handleLaunch = (jumpPosition: number | null) => {
     // 一意のIDを生成
     const id = crypto.randomUUID()
+    // ランダムな色を生成
+    const color = new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`);
     
     // 花火の打ち上げ位置を決定
     const position = new THREE.Vector3(
@@ -45,7 +47,7 @@ const DetectorScene = forwardRef<DetectorSceneHandle>((_, ref) => {
       0
     )
     // 花火の打ち上げ座標を配列に格納(この配列の長さ分、花火が打ち上がる)
-    setFireworks((prev) => [...prev, { id, position }])
+    setFireworks((prev) => [...prev, { id, position, color }])
   }
   
   // 花火が終了したときの処理
@@ -63,9 +65,10 @@ const DetectorScene = forwardRef<DetectorSceneHandle>((_, ref) => {
           key={fw.id}
           from={fw.position}  // 花火の打ち上げの始点
           to={new THREE.Vector3(fw.position.x, fw.position.y + explodingHeight, fw.position.z)} // 花火の打ち上げの終点
-          color={explosionColor}        // 花火の色を指定
+          color={fw.color}
           size={explosionRadius}        // 花火のサイズを指定
           onComplete={() => onFinished(fw.id)}    // 花火が終了したときのコールバック
+          layers={layers}
         />
       ))}
     </>

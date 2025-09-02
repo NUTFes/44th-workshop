@@ -35,6 +35,8 @@ const IllustrationExploding =  memo(function IllustrationExploding({
   const defaultVelocity = 0.3
   // 星のオフセット
   const starOffset = 0.01
+  // 星のサイズ
+  const starSize = 0.2
   
   // 星のパーティクルを描画するための参照
   const starPointsRef = useRef<THREE.Points>(null)  // ポイントの参照
@@ -161,7 +163,7 @@ const IllustrationExploding =  memo(function IllustrationExploding({
       <points ref={starPointsRef}>
         <bufferGeometry />
         <pointsMaterial
-          size={0.04}
+          size={starSize}
           color={color}
           vertexColors={false}
           depthWrite={false}  // 深度書き込みを無効化

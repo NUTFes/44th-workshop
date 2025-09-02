@@ -28,7 +28,7 @@ export const useJumpDetector = ({
   const lastHipYRef = useRef<number | null>(null);
   const lastJumpTimeRef = useRef<number>(0);
 
-  const jumpThreshold = 0.05; // ジャンプ検出のしきい値
+  const jumpThreshold = 0.02; // ジャンプ検出のしきい値
   const jumpCooldown = 500;   // ジャンプ検出のクールダウン時間（ミリ秒）
 
   useEffect(() => {

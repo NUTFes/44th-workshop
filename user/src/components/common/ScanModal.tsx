@@ -30,7 +30,7 @@ export default function ScanModal ({ isOpen, onScan, closeModal }: CommonModalPr
           display: 'flex',
           flexDirection: 'column',
           maxWidth: '80vw', // ビューポートの幅の80%を最大幅に設定
-          maxHeight: '80vh', // ビューポートの高さの80%を最大高さに設定
+          maxHeight: '50vh', // ビューポートの高さの50%を最大高さに設定
           overflow: 'hidden', // オーバーフローを隠す
           zIndex: 1000, // モーダルのz-indexを設定
         },

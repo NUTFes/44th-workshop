@@ -28,6 +28,8 @@ const PeonyExploding =  memo(function PeonyExploding({
   const segments = 20
   // 星の総数（分割数の二乗）
   const starParticleCount = segments * segments
+  // 星のサイズ
+  const starSize = 1
   // 重力の強さ
   const gravity = 0.05
   // デフォルトの速度
@@ -140,7 +142,7 @@ const PeonyExploding =  memo(function PeonyExploding({
       <points ref={starPointsRef}>
         <bufferGeometry />
         <pointsMaterial
-          size={0.5}
+          size={starSize}
           color={color}
           vertexColors={false}
           depthWrite={false}
