@@ -188,15 +188,15 @@ export default function Home() {
 
   const containerStyle: React.CSSProperties = {
     minHeight: '100vh',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f0f4f8',
     fontFamily: 'Arial, sans-serif',
   };
 
   const headerStyle: React.CSSProperties = {
-    backgroundColor: '#4f46e5',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
-    padding: '1rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    padding: '1.5rem',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   };
 
   const mainStyle: React.CSSProperties = {
@@ -207,61 +207,125 @@ export default function Home() {
 
   const cardStyle: React.CSSProperties = {
     backgroundColor: 'white',
-    padding: '1.5rem',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    marginBottom: '1rem',
+    padding: '2rem',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.07)',
+    marginBottom: '1.5rem',
+    border: '1px solid #e2e8f0',
   };
 
-  const buttonStyle: React.CSSProperties = {
-    backgroundColor: '#4f46e5',
+  const primaryButtonStyle: React.CSSProperties = {
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     color: 'white',
-    padding: '0.5rem 1rem',
+    padding: '0.75rem 1.5rem',
     border: 'none',
-    borderRadius: '4px',
+    borderRadius: '8px',
     cursor: 'pointer',
     margin: '0.25rem',
+    fontWeight: '600',
+    fontSize: '0.875rem',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
   };
 
-  const deleteButtonStyle: React.CSSProperties = {
-    ...buttonStyle,
-    backgroundColor: '#dc2626',
+  const secondaryButtonStyle: React.CSSProperties = {
+    background: 'linear-gradient(135deg, #38b2ac 0%, #319795 100%)',
+    color: 'white',
+    padding: '0.75rem 1.5rem',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    margin: '0.25rem',
+    fontWeight: '600',
+    fontSize: '0.875rem',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(56, 178, 172, 0.3)',
+  };
+
+  const dangerButtonStyle: React.CSSProperties = {
+    background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
+    color: 'white',
+    padding: '0.75rem 1.5rem',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    margin: '0.25rem',
+    fontWeight: '600',
+    fontSize: '0.875rem',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(245, 101, 101, 0.3)',
   };
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '4px',
+    padding: '0.75rem',
+    border: '2px solid #e2e8f0',
+    borderRadius: '8px',
     marginBottom: '1rem',
+    fontSize: '0.875rem',
+    transition: 'border-color 0.2s ease',
+    outline: 'none',
   };
 
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-    gap: '1rem',
+    gap: '1.5rem',
   };
+
+  const fireworkItemStyle = (isSelected: boolean): React.CSSProperties => ({
+    border: isSelected ? '2px solid #667eea' : '2px solid #e2e8f0',
+    padding: '1.25rem',
+    marginBottom: '0.75rem',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    backgroundColor: isSelected ? '#f7fafc' : 'transparent',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  });
+
+  const statusBadgeStyle = (isShareable: boolean): React.CSSProperties => ({
+    backgroundColor: isShareable ? '#48bb78' : '#ed8936',
+    color: 'white',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '12px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+  });
 
   return (
       <div style={containerStyle}>
         <header style={headerStyle}>
-          <h1>Fireworks Admin Dashboard</h1>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0 }}>
+            🎆 Fireworks Admin Dashboard
+          </h1>
+          <p style={{ margin: '0.5rem 0 0 0', opacity: 0.9 }}>
+            Manage and generate QR codes for firework displays
+          </p>
         </header>
 
         <main style={mainStyle}>
           {error && (
               <div style={{
-                backgroundColor: '#fee2e2',
-                borderLeft: '4px solid #ef4444',
-                color: '#dc2626',
+                backgroundColor: '#fed7d7',
+                borderLeft: '4px solid #e53e3e',
+                color: '#c53030',
                 padding: '1rem',
-                marginBottom: '1rem',
-                borderRadius: '4px',
+                marginBottom: '1.5rem',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(245, 101, 101, 0.1)',
               }}>
-                <p><strong>Error:</strong> {error}</p>
+                <p style={{ fontWeight: '600' }}>⚠️ Error: {error}</p>
                 <button
                     onClick={() => setError(null)}
-                    style={{ ...buttonStyle, backgroundColor: '#dc2626', marginTop: '0.5rem' }}
+                    style={{
+                      ...dangerButtonStyle,
+                      marginTop: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.75rem',
+                    }}
                 >
                   Dismiss
                 </button>
@@ -271,47 +335,49 @@ export default function Home() {
           <div style={gridStyle}>
             {/* Fireworks List */}
             <div style={cardStyle}>
-              <h2>Fireworks List</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
+                📋 Fireworks List
+              </h2>
               {loading ? (
-                  <div style={{ textAlign: 'center', padding: '2rem' }}>
-                    <p>Loading fireworks...</p>
+                  <div style={{ textAlign: 'center', padding: '3rem' }}>
+                    <div style={{
+                      display: 'inline-block',
+                      width: '40px',
+                      height: '40px',
+                      border: '4px solid #e2e8f0',
+                      borderTop: '4px solid #667eea',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      marginBottom: '1rem'
+                    }}></div>
+                    <p style={{ color: '#718096' }}>Loading fireworks...</p>
                   </div>
               ) : !fireworks || fireworks.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                    <p>No fireworks found</p>
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#718096' }}>
+                    <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>🎭 No fireworks found</p>
                     <p>Create your first firework below!</p>
                   </div>
               ) : (
                   <div>
-                    <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
-                      Click on a firework to view its QR code
+                    <p style={{ marginBottom: '1rem', color: '#718096', fontSize: '0.875rem' }}>
+                      💡 Click on a firework to view its QR code
                     </p>
                     {fireworks.map((firework) => (
-                        <div key={firework.id} style={{
-                          border: '1px solid #e5e7eb',
-                          padding: '1rem',
-                          marginBottom: '0.5rem',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          backgroundColor: selectedFirework?.id === firework.id ? '#e0f2fe' : 'transparent',
-                          transition: 'background-color 0.2s',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
+                        <div key={firework.id}
+                             style={fireworkItemStyle(selectedFirework?.id === firework.id)}
                              onClick={() => selectFirework(firework)}
                         >
                           <div>
-                            <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                              Firework #{firework.id}
+                            <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#2d3748' }}>
+                              🎆 Firework #{firework.id}
                             </div>
-                            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                        <span style={{ marginRight: '1rem' }}>
-                          {firework.isShareable ? 'Shareable' : 'Private'}
-                        </span>
-                              <span>
-                          {firework.createdAt ? new Date(firework.createdAt).toLocaleDateString() : 'N/A'}
-                        </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <span style={statusBadgeStyle(firework.isShareable)}>
+                                {firework.isShareable ? '🌐 Shareable' : '🔒 Private'}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: '#718096' }}>
+                                📅 {firework.createdAt ? new Date(firework.createdAt).toLocaleDateString() : 'N/A'}
+                              </span>
                             </div>
                           </div>
                           <button
@@ -320,54 +386,97 @@ export default function Home() {
                                 deleteFirework(firework.id);
                               }}
                               disabled={isDeleting}
-                              style={deleteButtonStyle}
+                              style={{
+                                ...dangerButtonStyle,
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.75rem',
+                                opacity: isDeleting ? 0.6 : 1,
+                              }}
                               title="Delete firework"
                           >
-                            Delete
+                            🗑️ Delete
                           </button>
                         </div>
                     ))}
                   </div>
               )}
 
-              <div style={{ marginTop: '2rem', borderTop: '1px solid #e5e7eb', paddingTop: '1.5rem' }}>
-                <h3>Add New Firework</h3>
+              <div style={{
+                marginTop: '2rem',
+                borderTop: '2px solid #e2e8f0',
+                paddingTop: '2rem'
+              }}>
+                <h3 style={{ fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
+                  ✨ Add New Firework
+                </h3>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                    Image File:
+                  <label style={{
+                    display: 'block',
+                    marginBottom: '0.5rem',
+                    fontWeight: '600',
+                    color: '#4a5568'
+                  }}>
+                    📁 Image File:
                   </label>
                   <input
                       type="file"
                       accept="image/*"
                       onChange={handleFileChange}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: selectedFile ? '#48bb78' : '#e2e8f0'
+                      }}
                   />
                   {selectedFile && (
-                      <p style={{ fontSize: '0.875rem', color: '#059669', marginBottom: '1rem' }}>
-                        Selected: {selectedFile.name}
+                      <p style={{
+                        fontSize: '0.875rem',
+                        color: '#48bb78',
+                        marginBottom: '1rem',
+                        fontWeight: '500'
+                      }}>
+                        ✅ Selected: {selectedFile.name}
                       </p>
                   )}
 
-                  <label style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem', cursor: 'pointer' }}>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: '1rem',
+                    cursor: 'pointer',
+                    padding: '0.75rem',
+                    backgroundColor: '#f7fafc',
+                    borderRadius: '8px',
+                    border: '2px solid #e2e8f0'
+                  }}>
                     <input
                         type="checkbox"
                         checked={isShareable}
                         onChange={(e) => setIsShareable(e.target.checked)}
-                        style={{ marginRight: '0.5rem' }}
+                        style={{
+                          marginRight: '0.75rem',
+                          width: '1rem',
+                          height: '1rem',
+                          accentColor: '#667eea'
+                        }}
                     />
-                    Make this firework shareable
+                    <span style={{ fontWeight: '500', color: '#2d3748' }}>
+                      🌐 Make this firework shareable
+                    </span>
                   </label>
 
                   <button
                       onClick={createFirework}
                       disabled={!selectedFile || isCreating}
                       style={{
-                        ...buttonStyle,
-                        opacity: (!selectedFile || isCreating) ? 0.5 : 1,
+                        ...primaryButtonStyle,
                         width: '100%',
+                        padding: '1rem',
+                        fontSize: '0.875rem',
+                        opacity: (!selectedFile || isCreating) ? 0.6 : 1,
+                        cursor: (!selectedFile || isCreating) ? 'not-allowed' : 'pointer',
                       }}
                   >
-                    {isCreating ? 'Creating...' : 'Create Firework'}
+                    {isCreating ? '⏳ Creating...' : '🚀 Create Firework'}
                   </button>
                 </div>
               </div>
@@ -376,10 +485,12 @@ export default function Home() {
             {/* QR Code Display */}
             {selectedFirework && (
                 <div style={cardStyle}>
-                  <h2>QR Code for Firework #{selectedFirework.id}</h2>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
+                    📱 QR Code for Firework #{selectedFirework.id}
+                  </h2>
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
-                      Scan this QR code to view the firework
+                    <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
+                      📸 Scan this QR code to view the firework
                     </p>
 
                     <QRCode
@@ -392,45 +503,71 @@ export default function Home() {
                     />
 
                     <div style={{
-                      marginTop: '1rem',
-                      padding: '0.75rem',
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '4px',
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      backgroundColor: '#edf2f7',
+                      borderRadius: '8px',
                       fontSize: '0.875rem',
-                      wordBreak: 'break-all'
+                      wordBreak: 'break-all',
+                      border: '1px solid #e2e8f0'
                     }}>
-                      <strong>URL:</strong> {generateQRUrl(selectedFirework)}
+                      <strong style={{ color: '#2d3748' }}>🔗 URL:</strong>
+                      <br />
+                      <span style={{ color: '#667eea', fontFamily: 'monospace' }}>
+                        {generateQRUrl(selectedFirework)}
+                      </span>
                     </div>
 
-                    <div style={{ marginTop: '1rem' }}>
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                        Firework Details:
+                    <div style={{ marginTop: '1.5rem' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        color: '#718096',
+                        marginBottom: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        📊 Firework Details:
                       </div>
                       <div style={{
                         textAlign: 'left',
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: '#f7fafc',
                         padding: '1rem',
-                        borderRadius: '4px',
-                        fontSize: '0.875rem'
+                        borderRadius: '8px',
+                        fontSize: '0.875rem',
+                        border: '1px solid #e2e8f0'
                       }}>
-                        <div><strong>ID:</strong> {selectedFirework.id}</div>
-                        <div><strong>Shareable:</strong> {selectedFirework.isShareable ? 'Yes' : 'No'}</div>
-                        <div><strong>Created:</strong> {selectedFirework.createdAt ? new Date(selectedFirework.createdAt).toLocaleString() : 'N/A'}</div>
-                        <div><strong>Updated:</strong> {selectedFirework.updatedAt ? new Date(selectedFirework.updatedAt).toLocaleString() : 'N/A'}</div>
-                        <div><strong>Pixel Data:</strong> {selectedFirework.pixelData?.length || 0} pixels</div>
-                        <div><strong>Original Image:</strong> {originalImageFiles.has(selectedFirework.id) ? 'Available' : 'Not available'}</div>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ color: '#2d3748' }}>🆔 ID:</strong> {selectedFirework.id}
+                        </div>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ color: '#2d3748' }}>🌐 Shareable:</strong>
+                          <span style={statusBadgeStyle(selectedFirework.isShareable)}>
+                            {selectedFirework.isShareable ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ color: '#2d3748' }}>📅 Created:</strong> {selectedFirework.createdAt ? new Date(selectedFirework.createdAt).toLocaleString() : 'N/A'}
+                        </div>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ color: '#2d3748' }}>🔄 Updated:</strong> {selectedFirework.updatedAt ? new Date(selectedFirework.updatedAt).toLocaleString() : 'N/A'}
+                        </div>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                          <strong style={{ color: '#2d3748' }}>🎨 Pixel Data:</strong> {selectedFirework.pixelData?.length || 0} pixels
+                        </div>
+                        <div>
+                          <strong style={{ color: '#2d3748' }}>🖼️ Original Image:</strong> {originalImageFiles.has(selectedFirework.id) ? '✅ Available' : '❌ Not available'}
+                        </div>
                       </div>
                     </div>
 
                     <button
                         onClick={() => setSelectedFirework(null)}
                         style={{
-                          ...buttonStyle,
-                          backgroundColor: '#6b7280',
-                          marginTop: '1rem',
+                          ...secondaryButtonStyle,
+                          marginTop: '1.5rem',
+                          padding: '0.75rem 1.5rem',
                         }}
                     >
-                      Close
+                      ✖️ Close
                     </button>
                   </div>
                 </div>
@@ -443,14 +580,34 @@ export default function Home() {
                 onClick={fetchFireworks}
                 disabled={loading}
                 style={{
-                  ...buttonStyle,
-                  opacity: loading ? 0.5 : 1,
+                  ...primaryButtonStyle,
+                  padding: '1rem 2rem',
+                  fontSize: '0.875rem',
+                  opacity: loading ? 0.6 : 1,
+                  cursor: loading ? 'not-allowed' : 'pointer',
                 }}
             >
-              {loading ? 'Loading...' : 'Refresh Fireworks'}
+              {loading ? '⏳ Loading...' : '🔄 Refresh Fireworks'}
             </button>
           </div>
         </main>
+
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          
+          button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          }
+          
+          input[type="file"]:focus,
+          input[type="file"]:hover {
+            border-color: #667eea;
+          }
+        `}</style>
       </div>
   );
 }
