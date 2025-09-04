@@ -25,6 +25,9 @@ interface HomeCanvasProps {
 // コンポーネントの外部から呼び出せる関数を定義
 export type HomeCanvasHandle = {
   handleLaunch: () => void; // 花火を打ち上げる関数
+  resetCameraRotation: () => void;  // カメラの回転をリセットする関数
+  setCurrentAsInitial: () => void;  // 現在のカメラの回転を初期値として設定する関数
+  setCameraRotation: (euler: THREE.Euler) => void;  // 特定の回転に設定する関数
 }
 
 // ===== HomeCanvas =====
@@ -38,16 +41,35 @@ const HomeCanvas = forwardRef<HomeCanvasHandle, HomeCanvasProps>(( props, ref) =
   console.log('HomeCanvas rendered');
   const { illustrationFireworks } = props;
   const homeSceneRef = useRef<HomeSceneHandle>(null);
+  const canvasSetupRef = useRef<CanvasSetupHandle>(null);
 
   // コンポーネントの外部から呼び出せる関数を定義
   useImperativeHandle(ref, () => ({
     handleLaunch,
+    resetCameraRotation,
+    setCurrentAsInitial,
+    setCameraRotation,
   }));
   
   // 花火を打ち上げる関数
   const handleLaunch = () => {
     // HomeSceneの花火を打ち上げる関数を呼び出す
     homeSceneRef.current?.handleLaunch();
+  };
+
+  // カメラの回転をリセットする関数
+  const resetCameraRotation = () => {
+    canvasSetupRef.current?.resetCameraRotation();
+  };
+
+  // 現在のカメラの回転を初期値として設定する関数
+  const setCurrentAsInitial = () => {
+    canvasSetupRef.current?.setCurrentAsInitial();
+  };
+
+  // 特定の回転に設定する関数
+  const setCameraRotation = (euler: THREE.Euler) => {
+    canvasSetupRef.current?.setCameraRotation(euler);
   };
 
   return (
@@ -58,7 +80,9 @@ const HomeCanvas = forwardRef<HomeCanvasHandle, HomeCanvasProps>(( props, ref) =
         // camera={{ position: [0, 0, 30], fov: 50 }} // カメラの初期位置と視野角を設定
       >
         <Suspense fallback={null}>
-          <CanvasSetup />
+          <CanvasSetup 
+            ref={canvasSetupRef}
+          />
           {illustrationFireworks && (
             <HomeScene
               illustrationFireworks={illustrationFireworks} // イラスト花火のデータを渡す
@@ -73,8 +97,15 @@ const HomeCanvas = forwardRef<HomeCanvasHandle, HomeCanvasProps>(( props, ref) =
 
 export default HomeCanvas;
 
+// コンポーネントの外部から呼び出せる関数を定義
+export type CanvasSetupHandle = {
+  resetCameraRotation: () => void;  // カメラの回転をリセットする関数
+  setCurrentAsInitial: () => void;  // 現在のカメラの回転を初期値として設定する関数
+  setCameraRotation: (euler: THREE.Euler) => void;  // 特定の回転に設定する関数
+}
+
 // Canvasの初期設定(useThreeはcanvas内でのみ使用可能なため切り分けている)
-const CanvasSetup = () => {
+const CanvasSetup = forwardRef<CanvasSetupHandle>(( _, ref) => {
   // THREE.Scene, THREE.Camera, THREE.WebGLRendererを取得
   const { scene, camera, gl } = useThree();
   
@@ -92,8 +123,15 @@ const CanvasSetup = () => {
   }, [camera]);
   
   // デバイスの回転を検知してカメラを動かすフックを使用
-  useDeviceMotionCamera(0.7);
+  const { resetCameraRotation, setCurrentAsInitial, setCameraRotation } = useDeviceMotionCamera(0.7);
 
+  // コンポーネントの外部から呼び出せる関数を定義
+  useImperativeHandle(ref, () => ({
+    resetCameraRotation,
+    setCurrentAsInitial,
+    setCameraRotation,
+  }));
+  
   // 色空間とトーンマッピングの設定
   useEffect(() => {
     gl.outputColorSpace = THREE.SRGBColorSpace; // 色空間をsRGBに設定
@@ -133,4 +171,4 @@ const CanvasSetup = () => {
       </EffectComposer>
     </>
   )
-}
+});
