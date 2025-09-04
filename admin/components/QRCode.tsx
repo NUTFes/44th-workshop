@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useRef, useCallback, useState } from "react";
+import React, { FC, useRef, useCallback, useState } from "react";
 import Image from "next/image";
 
 interface QRCodeProps {
@@ -175,8 +175,6 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             pdf.setLineDashPattern([2, 2], 0);
             pdf.setLineWidth(0.3);
             pdf.rect(rightCardX, rightCardY, cardWidth, cardHeight);
-
-            // 画像タイトルは削除（文字なし）
 
             if (originalImageDataUrl) {
                 try {
@@ -548,16 +546,48 @@ const QRCodeComponent: FC<QRCodeProps> = ({
         setImageError(false);
     }, []);
 
+    // Button styles
+    const buttonBaseStyle: React.CSSProperties = {
+        color: 'white',
+        padding: '0.75rem 1.5rem',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        transition: 'all 0.2s ease',
+        margin: '0.25rem',
+    };
+
+    const primaryButtonStyle: React.CSSProperties = {
+        ...buttonBaseStyle,
+        background: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+        boxShadow: '0 2px 4px rgba(72, 187, 120, 0.3)',
+    };
+
+    const secondaryButtonStyle: React.CSSProperties = {
+        ...buttonBaseStyle,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
+    };
+
+    const tertiaryButtonStyle: React.CSSProperties = {
+        ...buttonBaseStyle,
+        background: 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)',
+        boxShadow: '0 2px 4px rgba(237, 137, 54, 0.3)',
+    };
+
     return (
         <div style={{ textAlign: 'center' }}>
             <div
                 style={{
                     display: 'inline-block',
-                    padding: '1rem',
+                    padding: '1.5rem',
                     backgroundColor: 'white',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    marginBottom: '1rem'
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '12px',
+                    marginBottom: '1.5rem',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.07)',
                 }}
             >
                 {imageError ? (
@@ -568,14 +598,15 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: '#f3f4f6',
-                            color: '#6b7280',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '4px',
-                            fontSize: '0.875rem'
+                            backgroundColor: '#fed7d7',
+                            color: '#c53030',
+                            border: '2px solid #feb2b2',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            fontWeight: '600'
                         }}
                     >
-                        QR Code failed to load
+                        ❌ QR Code failed to load
                     </div>
                 ) : (
                     <Image
@@ -586,7 +617,8 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                         height={size}
                         style={{
                             display: 'block',
-                            borderRadius: '4px'
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
                         }}
                         onError={handleImageError}
                         onLoad={handleImageLoad}
@@ -599,17 +631,10 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                 {onDownload && (
                     <button
                         onClick={handleDownload}
-                        style={{
-                            backgroundColor: '#059669',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem'
-                        }}
+                        style={primaryButtonStyle}
+                        title="Download QR Code as PNG"
                     >
-                        Download QR Code
+                        💾 Download QR Code
                     </button>
                 )}
 
@@ -617,52 +642,45 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                     onClick={handleGeneratePrintPage}
                     disabled={isGeneratingPrint}
                     style={{
-                        backgroundColor: isGeneratingPrint ? '#9ca3af' : '#dc2626',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        border: 'none',
-                        borderRadius: '4px',
+                        ...secondaryButtonStyle,
+                        opacity: isGeneratingPrint ? 0.6 : 1,
                         cursor: isGeneratingPrint ? 'not-allowed' : 'pointer',
-                        fontSize: '0.875rem',
-                        opacity: isGeneratingPrint ? 0.7 : 1
                     }}
+                    title="Generate printable page with QR code and image"
                 >
-                    {isGeneratingPrint ? 'Generating...' : 'Print Combined Image'}
+                    {isGeneratingPrint ? '⏳ Generating...' : '🖨️ Print Layout'}
                 </button>
 
                 <button
                     onClick={handleGeneratePDF}
                     disabled={isGeneratingPDF}
                     style={{
-                        backgroundColor: isGeneratingPDF ? '#9ca3af' : '#3b82f6',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        border: 'none',
-                        borderRadius: '4px',
+                        ...tertiaryButtonStyle,
+                        opacity: isGeneratingPDF ? 0.6 : 1,
                         cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
-                        fontSize: '0.875rem',
-                        opacity: isGeneratingPDF ? 0.7 : 1
                     }}
+                    title="Download PDF with QR code and image cards"
                 >
-                    {isGeneratingPDF ? 'Generating...' : 'Download PDF Cards'}
+                    {isGeneratingPDF ? '⏳ Generating...' : '📄 Download PDF'}
                 </button>
             </div>
 
             <div style={{
                 fontSize: '0.75rem',
-                color: '#6b7280',
-                marginTop: '0.5rem'
+                color: '#718096',
+                marginTop: '1rem',
+                fontStyle: 'italic'
             }}>
-                QR Code generated by QR Server API
+                📡 QR Code generated by QR Server API
             </div>
 
             <div style={{
                 fontSize: '0.75rem',
-                color: '#6b7280',
-                marginTop: '0.25rem',
+                color: '#718096',
+                marginTop: '0.5rem',
                 fontStyle: 'italic'
             }}>
-                Clean layout with QR code and image side-by-side for printing
+                ✨ Clean layout with QR code and image side-by-side for printing
             </div>
         </div>
     );
