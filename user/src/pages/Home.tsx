@@ -136,6 +136,35 @@ export default function Home() {
   // 花火を打ち上げる関数
   const handleLaunch = () => {
     homeCanvasRef.current?.handleLaunch();
+    resetCameraRotation();
+  };
+  
+  // カメラの回転をリセットする関数
+    const resetCameraRotation = () => {
+      homeCanvasRef.current?.resetCameraRotation();
+    };
+  
+    // // 現在のカメラの回転を初期値として設定する関数
+    // const setCurrentAsInitial = () => {
+    //   homeCanvasRef.current?.setCurrentAsInitial();
+    // };
+  
+    // // 特定の回転に設定する関数
+    // const setCameraRotation = (euler: THREE.Euler) => {
+    //   homeCanvasRef.current?.setCameraRotation(euler);
+    // };
+    
+  const buttonStyle: React.CSSProperties = {
+    width: '200px',
+    padding: '4px 8px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    // marginTop: '20px',
+    position: 'absolute',
+    // bottom: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',  // 水平方向中央配置
+    // zIndex: 500,
   };
 
   return (
@@ -148,38 +177,36 @@ export default function Home() {
       <button
         onClick={() => setIsOpen(true)} // モーダルを開く
         style={{
-          width: 'auto',
-          padding: '4px 8px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          // marginTop: '20px',
-          position: 'absolute',
+          ...buttonStyle,
           bottom: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',  // 水平方向中央配置
-          // zIndex: 500,
         }}
       >
         QRコードをスキャン
       </button>
       {illustrationFireworks?
-        <button
-          onClick={() => handleLaunch()} // 花火を打ち上げる
-          style={{
-            width: 'auto',
-            padding: '4px 8px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            // marginTop: '20px',
-            position: 'absolute',
-            bottom: '80px',
-            left: '50%',
-            transform: 'translateX(-50%)',  // 水平方向中央配置
-            // zIndex: 500,
-          }}
-        >
-          花火を打ち上げる
-        </button>
+        <>
+          <button
+            onClick={() => handleLaunch()} // 花火を打ち上げる
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#f0b810ff',
+              bottom: '120px',
+            }}
+          >
+            花火を打ち上げる
+          </button>
+          <button
+            onClick={() => resetCameraRotation()} // カメラの回転をリセットする
+            style={{
+              ...buttonStyle,
+              // backgroundColor: '#4b4b4bff',
+              // color: 'white',
+              bottom: '60px',
+            }}
+          >
+            カメラのリセット
+          </button>
+        </>
         : <div 
           style={{
             backgroundColor: 'rgba(255, 255, 255, 0.6)',
