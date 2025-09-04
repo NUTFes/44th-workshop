@@ -1,0 +1,28 @@
+# デプロイ用のDockerfile
+FROM node:20
+
+# 作業ディレクトリを作成
+WORKDIR /user
+
+# 依存関係ファイルを先にコピーしてキャッシュを効かせる
+COPY package*.json ./
+
+# 依存関係をインストール
+RUN npm install
+
+# プロジェクトの全ファイルをコピー
+COPY . .
+
+# Viteの開発サーバー用のポートを公開
+EXPOSE 5173
+
+# ------ 開発用 -------
+# Viteの開発サーバーを起動
+# CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+# ------ 本番用 ------
+# Viteでビルドを実行(一応、実行前にuserで直接ビルドしておく)
+RUN npm run build
+
+# Viteで実行
+CMD [ "npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

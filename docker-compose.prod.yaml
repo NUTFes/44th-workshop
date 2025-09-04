@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile.prod
+    # environment:
+    #   VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: r3f-app
+    working_dir: /user
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./user:/user
+      - /user/node_modules # node_modulesをホストと共有しない(一敗)
+      - /user/dist
+    networks:
+      - app_network
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: admin-app
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_BASE_URL}
+    networks:
+      - app_network
+    depends_on:
+      - app
+  app:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      SWAGGER_URL: ${SWAGGER_URL}         # SwaggerUIのURLを環境変数から取得
+      SWAGGER_STG_URL: ${SWAGGER_STG_URL} # SwaggerUIのステージングURLを環境変数から取得
+      ADMIN_URL: ${ADMIN_URL}             # 管理者画面のURLを環境変数から取得
+      ADMIN_STG_URL: ${ADMIN_STG_URL}     # 管理者画面のステージングURLを環境変数から取得
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./api:/app
+    working_dir: /app
+    command: "./start.sh"
+    networks:
+      - app_network
+  db:
+    image: postgres
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB} # 環境変数から取得
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app_network
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    # openapi.yml(ルートディレクトリに配置)をマウント
+    volumes:
+      - ./openapi.yaml:/openapi.yaml
+    networks:
+      - app_network
+    environment:
+      SWAGGER_JSON: /openapi.yaml  # コンテナ内のパスを指定
+  cloudflared:
+    image: cloudflare/cloudflared:2025.8.1
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    restart: unless-stopped
+    volumes:
+      - /root/44th-workshop/cloudflared:/etc/cloudflared:ro
+    networks:
+      - app_network
+
+volumes:
+  postgres-data:
+
+networks:
+  app_network:
