@@ -5,10 +5,11 @@ import type { CSSProperties } from 'react';
 
 export const ACCENT_COLOR = '#f0b810';
 
-/** 画面下部中央に浮かぶコントロールパネル全体の位置 */
+/** 画面下部中央に浮かぶコントロールパネル全体の位置。
+ *  iPhoneのホームインジケータ等と重ならないようセーフエリア分を加算する */
 export const overlayContainerStyle: CSSProperties = {
   position: 'absolute',
-  bottom: '24px',
+  bottom: 'calc(24px + env(safe-area-inset-bottom))',
   left: '50%',
   transform: 'translateX(-50%)',
   display: 'flex',
@@ -19,7 +20,7 @@ export const overlayContainerStyle: CSSProperties = {
 };
 
 /** コントロールパネルの背景カード */
-export const panelStyle: CSSProperties = {
+const basePanelStyle: CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
   display: 'flex',
@@ -32,6 +33,9 @@ export const panelStyle: CSSProperties = {
   backdropFilter: 'blur(6px)',
   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
 };
+
+/** コントロールパネルの背景カード（花火の打ち上げ中も含めて常に不透明のまま） */
+export const panelStyle: CSSProperties = basePanelStyle;
 
 const baseButtonStyle: CSSProperties = {
   boxSizing: 'border-box',
@@ -74,6 +78,26 @@ export const errorPillStyle: CSSProperties = {
   ...statusPillStyle,
   backgroundColor: 'rgba(120, 20, 20, 0.6)',
   lineHeight: 1.6,
+};
+
+/** 詳細設定の開閉トグルボタン（パネル上部に小さく右寄せで置く） */
+export const settingsToggleButtonStyle: CSSProperties = {
+  alignSelf: 'flex-end',
+  padding: '4px 8px',
+  fontSize: '12px',
+  fontWeight: 600,
+  borderRadius: '8px',
+  border: 'none',
+  backgroundColor: 'transparent',
+  color: 'rgba(255, 255, 255, 0.75)',
+  cursor: 'pointer',
+};
+
+/** 折りたたみ内の設定群（画質セレクタ・カメラのリセット） */
+export const settingsSectionStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
 };
 
 /** 画質セレクタの行 */
