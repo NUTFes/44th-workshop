@@ -69,11 +69,7 @@ export default function AddFireworkForm({
   };
 
   return (
-    <div style={{
-      marginTop: '2rem',
-      borderTop: '2px solid #e2e8f0',
-      paddingTop: '2rem',
-    }}>
+    <div>
       <h3 style={{ fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
         ✨ 花火を追加
       </h3>

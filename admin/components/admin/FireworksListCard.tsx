@@ -43,6 +43,20 @@ export default function FireworksListCard({
 }: FireworksListCardProps) {
   return (
     <div style={cardStyle}>
+      <AddFireworkForm
+        nextId={nextId}
+        selectedFile={selectedFile}
+        isShareable={isShareable}
+        isCreating={isCreating}
+        onEditedFile={onEditedFile}
+        onShareableChange={onShareableChange}
+        onCreate={onCreate}
+      />
+      <div style={{
+      marginTop: '2rem',
+      borderTop: '2px solid #e2e8f0',
+      paddingTop: '2rem',
+    }}></div>
       <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
         📋 花火の一覧
       </h2>
@@ -91,15 +105,7 @@ export default function FireworksListCard({
         </div>
       )}
 
-      <AddFireworkForm
-        nextId={nextId}
-        selectedFile={selectedFile}
-        isShareable={isShareable}
-        isCreating={isCreating}
-        onEditedFile={onEditedFile}
-        onShareableChange={onShareableChange}
-        onCreate={onCreate}
-      />
+      
     </div>
   );
 }
