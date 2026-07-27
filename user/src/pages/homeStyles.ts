@@ -3,7 +3,38 @@ import type { CSSProperties } from 'react';
 // ===== Home ページの見た目に関する定数・スタイル定義 =====
 // admin/styles/adminStyles.ts と同様に、インラインstyleオブジェクトをここへ集約する。
 
-export const ACCENT_COLOR = '#f0b810';
+/** 色トークン。admin/styles/adminStyles.ts の「影の色 = 要素のベース色」という
+ *  ルールを踏襲しつつ、ARカメラ映像の上に重ねる半透明ダークUI向けに調整したもの */
+export const COLORS = {
+  accent: '#f0b810',
+  accentLight: '#ffd607', // logo.png から実測したロゴの金色
+  accentDark: '#d99a00',
+  onAccent: '#1a1a1a',
+  glow: 'rgba(240, 184, 16, 0.35)',
+  surface: 'rgba(18, 18, 22, 0.66)',
+  surfaceRaised: 'rgba(255, 255, 255, 0.10)',
+  surfaceSubtle: 'rgba(255, 255, 255, 0.06)',
+  border: 'rgba(255, 255, 255, 0.14)',
+  borderStrong: 'rgba(255, 255, 255, 0.28)',
+  text: '#fff',
+  textSecondary: 'rgba(255, 255, 255, 0.72)',
+  textTertiary: 'rgba(255, 255, 255, 0.45)',
+  dangerSurface: 'rgba(120, 20, 20, 0.55)',
+  dangerText: '#feb2b2',
+} as const;
+
+/** 後方互換のためのエイリアス（COLORS.accent と同値） */
+export const ACCENT_COLOR = COLORS.accent;
+
+export const RADIUS = {
+  sm: '8px',
+  md: '12px',
+  lg: '20px',
+  pill: '999px',
+} as const;
+
+/** 打ち上げボタン専用の表示フォント。index.html で該当文字のみサブセット読み込み済み */
+export const FONT_DISPLAY = '"Zen Maru Gothic", -apple-system, "Hiragino Sans", sans-serif';
 
 /** 画面下部中央に浮かぶコントロールパネル全体の位置。
  *  iPhoneのホームインジケータ等と重ならないようセーフエリア分を加算する */
@@ -19,77 +50,107 @@ export const overlayContainerStyle: CSSProperties = {
   width: 'min(340px, 92vw)',
 };
 
-/** コントロールパネルの背景カード */
-const basePanelStyle: CSSProperties = {
+/** 詳細設定（画質・カメラのリセット）を収めるガラスカード */
+export const panelStyle: CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'stretch',
   gap: '10px',
-  padding: '14px 16px',
-  borderRadius: '16px',
-  backgroundColor: 'rgba(20, 20, 24, 0.6)',
-  backdropFilter: 'blur(6px)',
-  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+  padding: '10px 14px',
+  borderRadius: RADIUS.lg,
+  backgroundColor: COLORS.surface,
+  backdropFilter: 'blur(12px) saturate(140%)',
+  border: `1px solid ${COLORS.border}`,
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
 };
 
-/** コントロールパネルの背景カード（花火の打ち上げ中も含めて常に不透明のまま） */
-export const panelStyle: CSSProperties = basePanelStyle;
+/** 主要アクション（花火を打ち上げる）。ローディング／変換中は disabled のまま
+ *  スピナー付きラベルを表示し、パネルの高さが変わらないようにする */
+export function launchButtonStyle(disabled: boolean): CSSProperties {
+  return {
+    boxSizing: 'border-box',
+    width: '100%',
+    minHeight: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '0 20px',
+    borderRadius: RADIUS.pill,
+    border: 'none',
+    cursor: disabled ? 'default' : 'pointer',
+    fontFamily: FONT_DISPLAY,
+    fontWeight: 700,
+    fontSize: '17px',
+    letterSpacing: '0.04em',
+    color: disabled ? COLORS.text : COLORS.onAccent,
+    background: disabled
+        ? COLORS.surfaceRaised
+        : `linear-gradient(135deg, ${COLORS.accentLight} 0%, ${COLORS.accent} 45%, ${COLORS.accentDark} 100%)`,
+    boxShadow: disabled
+        ? 'none'
+        : `0 6px 20px ${COLORS.glow}, inset 0 1px 0 rgba(255, 255, 255, 0.45)`,
+    opacity: disabled ? 0.75 : 1,
+  };
+}
 
-const baseButtonStyle: CSSProperties = {
+/** 副次アクション（カメラのリセット・QRスキャン・モーダルの閉じるボタン） */
+export const ghostButtonStyle: CSSProperties = {
   boxSizing: 'border-box',
   width: '100%',
-  padding: '12px 16px',
-  fontSize: '15px',
+  minHeight: '44px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '0 16px',
+  borderRadius: RADIUS.pill,
+  border: `1px solid ${COLORS.borderStrong}`,
+  backgroundColor: COLORS.surfaceSubtle,
+  backdropFilter: 'blur(8px)',
+  color: COLORS.text,
+  fontSize: '14px',
   fontWeight: 600,
-  borderRadius: '12px',
-  border: 'none',
   cursor: 'pointer',
 };
 
-/** 主要アクション（花火を打ち上げる） */
-export const primaryButtonStyle: CSSProperties = {
-  ...baseButtonStyle,
-  backgroundColor: ACCENT_COLOR,
-  color: '#1a1a1a',
-};
-
-/** 副次アクション（カメラのリセット・QRスキャン） */
-export const secondaryButtonStyle: CSSProperties = {
-  ...baseButtonStyle,
-  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  color: '#fff',
-  border: '1px solid rgba(255, 255, 255, 0.25)',
-};
-
-/** 読み込み中・変換中の状態表示 */
-export const statusPillStyle: CSSProperties = {
-  padding: '10px 16px',
-  borderRadius: '12px',
-  backgroundColor: 'rgba(20, 20, 24, 0.6)',
-  color: '#fff',
-  fontSize: '14px',
-  textAlign: 'center',
+/** 打ち上げボタン内のローディングスピナー本体。回転アニメーションは index.css の .hb-spin が担う */
+export const spinnerStyle: CSSProperties = {
+  width: '16px',
+  height: '16px',
+  boxSizing: 'border-box',
+  borderRadius: '50%',
+  border: '2px solid rgba(255, 255, 255, 0.35)',
+  borderTopColor: COLORS.text,
 };
 
 /** エラー表示（花火が読み込めなかった場合） */
 export const errorPillStyle: CSSProperties = {
-  ...statusPillStyle,
-  backgroundColor: 'rgba(120, 20, 20, 0.6)',
+  padding: '10px 16px',
+  borderRadius: RADIUS.md,
+  backgroundColor: COLORS.dangerSurface,
+  borderLeft: '3px solid #e53e3e',
+  color: COLORS.dangerText,
+  fontSize: '14px',
   lineHeight: 1.6,
+  textAlign: 'center',
 };
 
-/** 詳細設定の開閉トグルボタン（パネル上部に小さく右寄せで置く） */
+/** 詳細設定の開閉トグルボタン（パネル上部に置く。ラベルは固定でシェブロンの向きだけ変える） */
 export const settingsToggleButtonStyle: CSSProperties = {
-  alignSelf: 'flex-end',
-  padding: '4px 8px',
-  fontSize: '12px',
+  boxSizing: 'border-box',
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '6px 4px',
+  fontSize: '13px',
   fontWeight: 600,
-  borderRadius: '8px',
+  borderRadius: RADIUS.sm,
   border: 'none',
   backgroundColor: 'transparent',
-  color: 'rgba(255, 255, 255, 0.75)',
+  color: COLORS.textSecondary,
   cursor: 'pointer',
 };
 
@@ -100,7 +161,7 @@ export const settingsSectionStyle: CSSProperties = {
   gap: '10px',
 };
 
-/** 画質セレクタの行 */
+/** 画質セレクタ（ラベル＋セグメンテッドコントロール）の縦並びコンテナ */
 export const qualityRowContainerStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -109,25 +170,50 @@ export const qualityRowContainerStyle: CSSProperties = {
 
 export const qualityLabelStyle: CSSProperties = {
   fontSize: '12px',
-  color: 'rgba(255, 255, 255, 0.75)',
+  color: COLORS.textTertiary,
 };
 
-export const qualityRowStyle: CSSProperties = {
+/** セグメンテッドコントロールの外枠。中に金のピル（segmentedIndicatorStyle）が絶対配置でスライドする */
+export const segmentedContainerStyle: CSSProperties = {
+  position: 'relative',
   display: 'flex',
-  gap: '6px',
+  padding: '3px',
+  backgroundColor: COLORS.surfaceSubtle,
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: RADIUS.pill,
 };
 
-/** 画質セレクタの各ボタン（選択状態でアクセントカラーに切り替え） */
-export function qualityButtonStyle(isActive: boolean): CSSProperties {
+/** 選択中の画質を示す金のピル。index/count から位置と幅を算出してスライドさせる */
+export function segmentedIndicatorStyle(index: number, count: number): CSSProperties {
   return {
+    position: 'absolute',
+    top: '3px',
+    bottom: '3px',
+    left: '3px',
+    width: `calc((100% - 6px) / ${count})`,
+    transform: `translateX(${index * 100}%)`,
+    borderRadius: RADIUS.pill,
+    background: `linear-gradient(135deg, ${COLORS.accentLight} 0%, ${COLORS.accent} 100%)`,
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+    transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    pointerEvents: 'none',
+  };
+}
+
+/** セグメンテッドコントロールの各ボタン。背景は持たず、選択状態はピルと文字色だけで示す */
+export function segmentedButtonStyle(isActive: boolean): CSSProperties {
+  return {
+    position: 'relative',
+    zIndex: 1,
     flex: 1,
-    padding: '8px 0',
+    padding: '7px 0',
+    border: 'none',
+    background: 'transparent',
+    borderRadius: RADIUS.pill,
     fontSize: '13px',
-    fontWeight: 600,
-    borderRadius: '8px',
-    border: isActive ? `1px solid ${ACCENT_COLOR}` : '1px solid rgba(255, 255, 255, 0.25)',
-    backgroundColor: isActive ? ACCENT_COLOR : 'rgba(255, 255, 255, 0.08)',
-    color: isActive ? '#1a1a1a' : '#fff',
+    fontWeight: isActive ? 700 : 600,
+    color: isActive ? COLORS.onAccent : COLORS.textSecondary,
     cursor: 'pointer',
+    transition: 'color 0.2s ease',
   };
 }

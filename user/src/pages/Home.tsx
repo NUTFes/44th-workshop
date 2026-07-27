@@ -18,16 +18,17 @@ import HomeCanvas from "../canvas/HomeCanvas";
 import {
   overlayContainerStyle,
   panelStyle,
-  primaryButtonStyle,
-  secondaryButtonStyle,
-  statusPillStyle,
+  launchButtonStyle,
+  ghostButtonStyle,
+  spinnerStyle,
   errorPillStyle,
   settingsToggleButtonStyle,
   settingsSectionStyle,
   qualityRowContainerStyle,
   qualityLabelStyle,
-  qualityRowStyle,
-  qualityButtonStyle,
+  segmentedContainerStyle,
+  segmentedIndicatorStyle,
+  segmentedButtonStyle,
 } from './homeStyles';
 
 // 画質レベル: 値が大きいほど画像を細かいグリッドに分解し、粒子数が増えて精細になる（その分重くなる）
@@ -145,8 +146,10 @@ export default function Home() {
   };
 
   const isReady = !!particleData && !isConverting;
-  const currentQualityLabel =
-      QUALITY_LEVELS.find((level) => level.resolution === resolution)?.label ?? '';
+  const currentQualityIndex = QUALITY_LEVELS.findIndex((level) => level.resolution === resolution);
+  const currentQualityLabel = QUALITY_LEVELS[currentQualityIndex]?.label ?? '';
+  // 読み込み中・変換中も打ち上げボタンを表示したまま disabled にし、パネルの高さが変わらないようにする
+  const showLaunchButton = isLoading || isConverting || isReady;
 
   return (
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -162,24 +165,27 @@ export default function Home() {
             <button
                 onClick={() => setIsSettingsOpen((prev) => !prev)}
                 style={settingsToggleButtonStyle}
+                className="hb-pressable"
                 aria-expanded={isSettingsOpen}
                 aria-controls="home-settings"
             >
-              {isSettingsOpen ? '設定を閉じる ▲' : `設定（画質: ${currentQualityLabel}） ▼`}
+              <span>⚙ 解像度: {currentQualityLabel}</span>
+              <span className={`hb-chevron${isSettingsOpen ? ' hb-chevron--open' : ''}`}>⌄</span>
             </button>
 
             {isSettingsOpen && (
-                <div id="home-settings" style={settingsSectionStyle}>
+                <div id="home-settings" style={settingsSectionStyle} className="hb-reveal">
                   {/* 画質セレクタ（低32 / 中64 / 高128） */}
                   <div style={qualityRowContainerStyle}>
-                    <span style={qualityLabelStyle}>画質</span>
-                    <div style={qualityRowStyle}>
+                    <span style={qualityLabelStyle}>解像度</span>
+                    <div style={segmentedContainerStyle}>
+                      <div style={segmentedIndicatorStyle(Math.max(currentQualityIndex, 0), QUALITY_LEVELS.length)} />
                       {QUALITY_LEVELS.map((level) => (
                           <button
                               key={level.resolution}
                               onClick={() => setResolution(level.resolution)}
                               disabled={isConverting}
-                              style={qualityButtonStyle(resolution === level.resolution)}
+                              style={segmentedButtonStyle(resolution === level.resolution)}
                           >
                             {level.label}
                           </button>
@@ -188,34 +194,36 @@ export default function Home() {
                   </div>
 
                   {isReady && (
-                      <button onClick={resetCameraRotation} style={secondaryButtonStyle}>
+                      <button onClick={resetCameraRotation} style={ghostButtonStyle} className="hb-pressable">
                         カメラのリセット
                       </button>
                   )}
                 </div>
             )}
-
-            {/* 打ち上げ／状態表示はどの状態でも常に見えるようにする */}
-            {isLoading || isConverting ? (
-                <div style={statusPillStyle}>
-                  {isLoading ? '読み込み中...' : '画像を変換中...'}
-                </div>
-            ) : isReady ? (
-                <button onClick={handleLaunch} style={primaryButtonStyle}>
-                  🎆 花火を打ち上げる
-                </button>
-            ) : (
-                <div style={errorPillStyle}>
-                  花火が読み込めませんでした<br />
-                  別のQRコードをスキャンしてください
-                </div>
-            )}
-
-            {/* QRコードのスキャンはどの状態でも常に行えるようにする */}
-            <button onClick={() => setIsOpen(true)} style={secondaryButtonStyle}>
-              QRコードをスキャン
-            </button>
           </div>
+
+          {/* 打ち上げボタンはローディング／変換中も disabled のまま表示し、パネルの高さを揺らさない */}
+          {showLaunchButton ? (
+              <button
+                  onClick={handleLaunch}
+                  disabled={!isReady}
+                  style={launchButtonStyle(!isReady)}
+                  className="hb-pressable hb-launch"
+              >
+                {!isReady && <span className="hb-spin" style={spinnerStyle} />}
+                {isLoading ? '読み込み中...' : isConverting ? '画像を変換中...' : '花火を打ち上げる'}
+              </button>
+          ) : (
+              <div style={errorPillStyle}>
+                花火が読み込めませんでした<br />
+                別のQRコードをスキャンしてください
+              </div>
+          )}
+
+          {/* QRコードのスキャンはどの状態でも常に行えるようにする */}
+          <button onClick={() => setIsOpen(true)} style={ghostButtonStyle} className="hb-pressable">
+            QRコードをスキャン
+          </button>
         </div>
 
         <ScanModal
