@@ -22,6 +22,8 @@ import {
   secondaryButtonStyle,
   statusPillStyle,
   errorPillStyle,
+  settingsToggleButtonStyle,
+  settingsSectionStyle,
   qualityRowContainerStyle,
   qualityLabelStyle,
   qualityRowStyle,
@@ -48,6 +50,10 @@ export default function Home() {
   const [resolution, setResolution] = useState(64);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // 詳細設定（画質・カメラのリセット）の開閉。花火の表示領域を広く取るため既定は閉じる
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const homeCanvasRef = useRef<HomeCanvasHandle>(null);
 
@@ -130,6 +136,8 @@ export default function Home() {
   const handleLaunch = () => {
     homeCanvasRef.current?.handleLaunch();
     resetCameraRotation();
+    // 打ち上げた瞬間にパネルを縮め、花火の視界を確保する
+    setIsSettingsOpen(false);
   };
 
   const resetCameraRotation = () => {
@@ -137,6 +145,8 @@ export default function Home() {
   };
 
   const isReady = !!particleData && !isConverting;
+  const currentQualityLabel =
+      QUALITY_LEVELS.find((level) => level.resolution === resolution)?.label ?? '';
 
   return (
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -148,36 +158,52 @@ export default function Home() {
 
         <div style={overlayContainerStyle}>
           <div style={panelStyle}>
-            {/* 画質セレクタ（低32 / 中64 / 高128） */}
-            <div style={qualityRowContainerStyle}>
-              <span style={qualityLabelStyle}>画質</span>
-              <div style={qualityRowStyle}>
-                {QUALITY_LEVELS.map((level) => (
-                    <button
-                        key={level.resolution}
-                        onClick={() => setResolution(level.resolution)}
-                        disabled={isConverting}
-                        style={qualityButtonStyle(resolution === level.resolution)}
-                    >
-                      {level.label}
-                    </button>
-                ))}
-              </div>
-            </div>
+            {/* 詳細設定（画質・カメラのリセット）は既定で閉じておき、花火と重なる面積を減らす */}
+            <button
+                onClick={() => setIsSettingsOpen((prev) => !prev)}
+                style={settingsToggleButtonStyle}
+                aria-expanded={isSettingsOpen}
+                aria-controls="home-settings"
+            >
+              {isSettingsOpen ? '設定を閉じる ▲' : `設定（画質: ${currentQualityLabel}） ▼`}
+            </button>
 
+            {isSettingsOpen && (
+                <div id="home-settings" style={settingsSectionStyle}>
+                  {/* 画質セレクタ（低32 / 中64 / 高128） */}
+                  <div style={qualityRowContainerStyle}>
+                    <span style={qualityLabelStyle}>画質</span>
+                    <div style={qualityRowStyle}>
+                      {QUALITY_LEVELS.map((level) => (
+                          <button
+                              key={level.resolution}
+                              onClick={() => setResolution(level.resolution)}
+                              disabled={isConverting}
+                              style={qualityButtonStyle(resolution === level.resolution)}
+                          >
+                            {level.label}
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {isReady && (
+                      <button onClick={resetCameraRotation} style={secondaryButtonStyle}>
+                        カメラのリセット
+                      </button>
+                  )}
+                </div>
+            )}
+
+            {/* 打ち上げ／状態表示はどの状態でも常に見えるようにする */}
             {isLoading || isConverting ? (
                 <div style={statusPillStyle}>
                   {isLoading ? '読み込み中...' : '画像を変換中...'}
                 </div>
             ) : isReady ? (
-                <>
-                  <button onClick={handleLaunch} style={primaryButtonStyle}>
-                    🎆 花火を打ち上げる
-                  </button>
-                  <button onClick={resetCameraRotation} style={secondaryButtonStyle}>
-                    カメラのリセット
-                  </button>
-                </>
+                <button onClick={handleLaunch} style={primaryButtonStyle}>
+                  🎆 花火を打ち上げる
+                </button>
             ) : (
                 <div style={errorPillStyle}>
                   花火が読み込めませんでした<br />
