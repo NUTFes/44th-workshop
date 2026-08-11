@@ -52,7 +52,7 @@ export default function Home() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  // 詳細設定（画質・カメラのリセット）の開閉。花火の表示領域を広く取るため既定は閉じる
+  // 詳細設定（画質・カメラのリセット・QRコードをスキャン）の開閉。花火の表示領域を広く取るため既定は閉じる
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -147,9 +147,14 @@ export default function Home() {
 
   const isReady = !!particleData && !isConverting;
   const currentQualityIndex = QUALITY_LEVELS.findIndex((level) => level.resolution === resolution);
-  const currentQualityLabel = QUALITY_LEVELS[currentQualityIndex]?.label ?? '';
   // 読み込み中・変換中も打ち上げボタンを表示したまま disabled にし、パネルの高さが変わらないようにする
   const showLaunchButton = isLoading || isConverting || isReady;
+  const hasLoadFailed = !showLaunchButton;
+
+  // 読み込みに失敗したときは、QRコードをスキャンをすぐ押せるようパネルを自動で開く
+  useEffect(() => {
+    if (hasLoadFailed) setIsSettingsOpen(true);
+  }, [hasLoadFailed]);
 
   return (
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -161,7 +166,7 @@ export default function Home() {
 
         <div style={overlayContainerStyle}>
           <div style={panelStyle}>
-            {/* 詳細設定（画質・カメラのリセット）は既定で閉じておき、花火と重なる面積を減らす */}
+            {/* 詳細設定（画質・カメラのリセット・QRコードをスキャン）は既定で閉じておき、花火と重なる面積を減らす */}
             <button
                 onClick={() => setIsSettingsOpen((prev) => !prev)}
                 style={settingsToggleButtonStyle}
@@ -169,7 +174,7 @@ export default function Home() {
                 aria-expanded={isSettingsOpen}
                 aria-controls="home-settings"
             >
-              <span>⚙ 解像度: {currentQualityLabel}</span>
+              <span>⚙ 設定</span>
               <span className={`hb-chevron${isSettingsOpen ? ' hb-chevron--open' : ''}`}>⌄</span>
             </button>
 
@@ -198,6 +203,11 @@ export default function Home() {
                         カメラのリセット
                       </button>
                   )}
+
+                  {/* QRコードのスキャンは折りたたみ内に置き、閉じている間は花火の視界を確保する */}
+                  <button onClick={() => setIsOpen(true)} style={ghostButtonStyle} className="hb-pressable">
+                    QRコードをスキャン
+                  </button>
                 </div>
             )}
           </div>
@@ -219,11 +229,6 @@ export default function Home() {
                 別のQRコードをスキャンしてください
               </div>
           )}
-
-          {/* QRコードのスキャンはどの状態でも常に行えるようにする */}
-          <button onClick={() => setIsOpen(true)} style={ghostButtonStyle} className="hb-pressable">
-            QRコードをスキャン
-          </button>
         </div>
 
         <ScanModal
