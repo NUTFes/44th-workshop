@@ -96,7 +96,8 @@ export function launchButtonStyle(disabled: boolean): CSSProperties {
   };
 }
 
-/** 副次アクション（カメラのリセット・QRスキャン・モーダルの閉じるボタン） */
+/** 副次アクション（カメラのリセット・QRスキャン・モーダルの閉じるボタン）。
+ *  アイコン＋ラベルの横並びを想定し、中央寄せで gap を確保する */
 export const ghostButtonStyle: CSSProperties = {
   boxSizing: 'border-box',
   width: '100%',
@@ -104,15 +105,23 @@ export const ghostButtonStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  gap: '8px',
   padding: '0 16px',
   borderRadius: RADIUS.pill,
   border: `1px solid ${COLORS.borderStrong}`,
-  backgroundColor: COLORS.surfaceSubtle,
+  backgroundColor: COLORS.surfaceRaised,
   backdropFilter: 'blur(8px)',
   color: COLORS.text,
   fontSize: '14px',
   fontWeight: 600,
   cursor: 'pointer',
+  boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+};
+
+/** ghostButtonStyle 内のアイコン共通スタイル */
+export const ghostButtonIconStyle: CSSProperties = {
+  fontSize: '17px',
+  flexShrink: 0,
 };
 
 /** 打ち上げボタン内のローディングスピナー本体。回転アニメーションは index.css の .hb-spin が担う */
@@ -137,28 +146,65 @@ export const errorPillStyle: CSSProperties = {
   textAlign: 'center',
 };
 
-/** 詳細設定の開閉トグルボタン（パネル上部に置く。ラベルは固定でシェブロンの向きだけ変える） */
-export const settingsToggleButtonStyle: CSSProperties = {
-  boxSizing: 'border-box',
-  width: '100%',
+/** 詳細設定の開閉トグルボタン（パネル上部に置く。開閉状態でアイコンバッジと背景の濃さを変える） */
+export function settingsToggleButtonStyle(isOpen: boolean): CSSProperties {
+  return {
+    boxSizing: 'border-box',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 10px',
+    borderRadius: RADIUS.md,
+    border: `1px solid ${isOpen ? COLORS.border : 'transparent'}`,
+    backgroundColor: isOpen ? COLORS.surfaceRaised : 'transparent',
+    color: COLORS.text,
+    cursor: 'pointer',
+  };
+}
+
+/** トグルボタン内の「アイコンバッジ＋ラベル」行 */
+export const settingsToggleLabelRowStyle: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '6px 4px',
-  fontSize: '13px',
-  fontWeight: 600,
-  borderRadius: RADIUS.sm,
-  border: 'none',
-  backgroundColor: 'transparent',
-  color: COLORS.textSecondary,
-  cursor: 'pointer',
+  gap: '10px',
+  fontSize: '14px',
+  fontWeight: 700,
+  letterSpacing: '0.02em',
 };
 
-/** 折りたたみ内の設定群（画質セレクタ・カメラのリセット） */
+/** 設定アイコンを収める丸バッジ。開閉状態でアクセントカラーの濃さを変える */
+export function settingsIconBadgeStyle(isOpen: boolean): CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    borderRadius: RADIUS.pill,
+    backgroundColor: isOpen ? COLORS.glow : COLORS.surfaceRaised,
+    color: isOpen ? COLORS.accentLight : COLORS.textSecondary,
+    fontSize: '16px',
+    flexShrink: 0,
+    transition: 'background-color 0.2s ease, color 0.2s ease',
+  };
+}
+
+/** 開閉シェブロンの色。トグルの文字色より一段暗く抑える */
+export const settingsChevronStyle: CSSProperties = {
+  fontSize: '18px',
+  color: COLORS.textTertiary,
+};
+
+/** 折りたたみ内の設定群（画質セレクタ・カメラのリセット・QRスキャン）。
+ *  トグルとの間に区切り線を入れ、独立したセクションであることを示す */
 export const settingsSectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '10px',
+  marginTop: '2px',
+  paddingTop: '12px',
+  borderTop: `1px solid ${COLORS.border}`,
 };
 
 /** 画質セレクタ（ラベル＋セグメンテッドコントロール）の縦並びコンテナ */

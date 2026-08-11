@@ -13,6 +13,7 @@ import { toSameOriginUrl } from '../config/apiConfig';
 import { useGetFireworkById } from '../apiClient/fireworks/myARProjectAPI';
 import ScanModal from '../components/common/ScanModal';
 import type { HomeCanvasHandle } from '../canvas/HomeCanvas';
+import { MdSettings, MdExpandMore, MdRestartAlt, MdQrCodeScanner } from 'react-icons/md';
 
 import HomeCanvas from "../canvas/HomeCanvas";
 import {
@@ -20,9 +21,13 @@ import {
   panelStyle,
   launchButtonStyle,
   ghostButtonStyle,
+  ghostButtonIconStyle,
   spinnerStyle,
   errorPillStyle,
   settingsToggleButtonStyle,
+  settingsToggleLabelRowStyle,
+  settingsIconBadgeStyle,
+  settingsChevronStyle,
   settingsSectionStyle,
   qualityRowContainerStyle,
   qualityLabelStyle,
@@ -169,13 +174,21 @@ export default function Home() {
             {/* 詳細設定（画質・カメラのリセット・QRコードをスキャン）は既定で閉じておき、花火と重なる面積を減らす */}
             <button
                 onClick={() => setIsSettingsOpen((prev) => !prev)}
-                style={settingsToggleButtonStyle}
+                style={settingsToggleButtonStyle(isSettingsOpen)}
                 className="hb-pressable"
                 aria-expanded={isSettingsOpen}
                 aria-controls="home-settings"
             >
-              <span>⚙ 設定</span>
-              <span className={`hb-chevron${isSettingsOpen ? ' hb-chevron--open' : ''}`}>⌄</span>
+              <span style={settingsToggleLabelRowStyle}>
+                <span style={settingsIconBadgeStyle(isSettingsOpen)}>
+                  <MdSettings />
+                </span>
+                設定
+              </span>
+              <MdExpandMore
+                  className={`hb-chevron${isSettingsOpen ? ' hb-chevron--open' : ''}`}
+                  style={settingsChevronStyle}
+              />
             </button>
 
             {isSettingsOpen && (
@@ -200,12 +213,14 @@ export default function Home() {
 
                   {isReady && (
                       <button onClick={resetCameraRotation} style={ghostButtonStyle} className="hb-pressable">
+                        <MdRestartAlt style={ghostButtonIconStyle} />
                         カメラのリセット
                       </button>
                   )}
 
                   {/* QRコードのスキャンは折りたたみ内に置き、閉じている間は花火の視界を確保する */}
                   <button onClick={() => setIsOpen(true)} style={ghostButtonStyle} className="hb-pressable">
+                    <MdQrCodeScanner style={ghostButtonIconStyle} />
                     QRコードをスキャン
                   </button>
                 </div>
