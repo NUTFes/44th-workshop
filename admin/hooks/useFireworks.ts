@@ -280,7 +280,7 @@ export function useFireworks() {
   }, [selectedFile, isShareable, API_URL, fireworks, fetchFireworks, fetchLatestId, saveImageToLocalStorage]);
 
   const deleteFirework = useCallback(async (fireworkId: number) => {
-    if (!confirm(`Are you sure you want to delete firework #${fireworkId}? This action cannot be undone.`)) {
+    if (!confirm(`花火 #${fireworkId} を削除します。よろしいですか？この操作は取り消せません。`)) {
       return;
     }
 
