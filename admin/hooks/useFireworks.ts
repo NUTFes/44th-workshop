@@ -156,7 +156,10 @@ export function useFireworks() {
   // 表示中（削除済みを除いた）の花火一覧から計算すると、直近削除したIDが最大だった場合に
   // 実際にDBが採番するIDより小さい値を予測してしまう。API呼び出しに失敗した場合のみ、
   // 苦肉の策として渡された一覧（fallbackList）から計算する。
-  const fetchLatestId = useCallback(async (fallbackList: Firework[] = fireworks) => {
+  // fallbackList は呼び出し側に明示的に渡してもらう（state の fireworks を直接参照すると、
+  // この関数が fireworks の変更のたびに再生成され、これに依存する fetchFireworks も
+  // 再生成されて mount 時 useEffect が無限に再実行されてしまうため）。
+  const fetchLatestId = useCallback(async (fallbackList: Firework[]) => {
     try {
       const response = await fetch(`${API_URL}/fireworks/latest-id`);
       if (response.ok) {
@@ -170,7 +173,7 @@ export function useFireworks() {
     }
     const maxId = fallbackList.length > 0 ? Math.max(...fallbackList.map(f => f.id)) : 0;
     setNextId(maxId + 1);
-  }, [API_URL, fireworks]);
+  }, [API_URL]);
 
   const fetchFireworks = useCallback(async () => {
     setLoading(true);
@@ -189,8 +192,10 @@ export function useFireworks() {
       const fireworksData = Array.isArray(data) ? data : [];
       setFireworks(fireworksData);
 
-      await loadAllImagesFromLocalStorage(fireworksData);
-      await fetchLatestId(fireworksData);
+      await Promise.all([
+        loadAllImagesFromLocalStorage(fireworksData),
+        fetchLatestId(fireworksData),
+      ]);
 
       setError(null);
     } catch (err) {
@@ -230,7 +235,7 @@ export function useFireworks() {
 
     setIsCreating(true);
     try {
-      await fetchLatestId();
+      await fetchLatestId(fireworks);
 
       const formData = new FormData();
       formData.append('image', selectedFile);
@@ -272,7 +277,7 @@ export function useFireworks() {
     } finally {
       setIsCreating(false);
     }
-  }, [selectedFile, isShareable, API_URL, fetchFireworks, fetchLatestId, saveImageToLocalStorage]);
+  }, [selectedFile, isShareable, API_URL, fireworks, fetchFireworks, fetchLatestId, saveImageToLocalStorage]);
 
   const deleteFirework = useCallback(async (fireworkId: number) => {
     if (!confirm(`Are you sure you want to delete firework #${fireworkId}? This action cannot be undone.`)) {
