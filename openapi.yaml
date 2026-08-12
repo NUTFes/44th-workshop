@@ -8,6 +8,17 @@ servers:
   - url: http://app:8080
     description: Docker内部用サーバ
 paths:
+  /fireworks/latest-id:
+    get:
+      summary: "現在登録されている花火の最大ID（削除済みを含む）を取得する"
+      operationId: "GetLatestFireworkId"
+      responses:
+        '200':
+          description: "最大ID。花火が1件も存在しない場合は 0"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LatestFireworkIdResponse"
   /fireworks:
     get:
       summary: "花火の一覧を取得する"
@@ -120,6 +131,17 @@ paths:
           content: {}
 components:
   schemas:
+    LatestFireworkIdResponse:
+      type: object
+      description: "現在登録されている花火の最大ID（削除済みを含む）のレスポンス"
+      required:
+        - latestId
+      properties:
+        latestId:
+          type: integer
+          format: int64
+          description: "花火が1件も存在しない場合は 0"
+          example: 5
     FireworkCreateRequest:
       type: object
       description: "花火を作成するためのリクエストボディ"
