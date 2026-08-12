@@ -151,22 +151,25 @@ export function useFireworks() {
 
   // ---- API handlers ----
 
-  const fetchLatestId = useCallback(async () => {
+  // 花火の削除は論理削除であり、DBのID採番（シーケンス）は削除しても巻き戻らない。
+  // そのため「次のID」は削除済みを含めた最大IDをAPIから取得して算出する必要があり、
+  // 表示中（削除済みを除いた）の花火一覧から計算すると、直近削除したIDが最大だった場合に
+  // 実際にDBが採番するIDより小さい値を予測してしまう。API呼び出しに失敗した場合のみ、
+  // 苦肉の策として渡された一覧（fallbackList）から計算する。
+  const fetchLatestId = useCallback(async (fallbackList: Firework[] = fireworks) => {
     try {
       const response = await fetch(`${API_URL}/fireworks/latest-id`);
       if (response.ok) {
         const data = await response.json();
         const latestId = data.latestId || 0;
         setNextId(latestId + 1);
-      } else {
-        const maxId = fireworks.length > 0 ? Math.max(...fireworks.map(f => f.id)) : 0;
-        setNextId(maxId + 1);
+        return;
       }
     } catch (err) {
       console.warn('Failed to fetch latest ID, calculating from existing data:', err);
-      const maxId = fireworks.length > 0 ? Math.max(...fireworks.map(f => f.id)) : 0;
-      setNextId(maxId + 1);
     }
+    const maxId = fallbackList.length > 0 ? Math.max(...fallbackList.map(f => f.id)) : 0;
+    setNextId(maxId + 1);
   }, [API_URL, fireworks]);
 
   const fetchFireworks = useCallback(async () => {
@@ -187,13 +190,7 @@ export function useFireworks() {
       setFireworks(fireworksData);
 
       await loadAllImagesFromLocalStorage(fireworksData);
-
-      if (fireworksData.length > 0) {
-        const maxId = Math.max(...fireworksData.map((f: Firework) => f.id));
-        setNextId(maxId + 1);
-      } else {
-        setNextId(1);
-      }
+      await fetchLatestId(fireworksData);
 
       setError(null);
     } catch (err) {
@@ -205,7 +202,7 @@ export function useFireworks() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL, loadAllImagesFromLocalStorage]);
+  }, [API_URL, loadAllImagesFromLocalStorage, fetchLatestId]);
 
   const selectFirework = useCallback((firework: Firework | null) => {
     setSelectedFirework(firework);

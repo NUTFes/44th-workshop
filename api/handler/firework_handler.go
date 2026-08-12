@@ -20,6 +20,7 @@ type fireworkHandler struct {
 type FireworkHandler interface {
 	GetFireworks(ctx echo.Context, params openapi.GetFireworksParams) error
 	GetFireworkById(ctx echo.Context, id int64, params openapi.GetFireworkByIdParams) error
+	GetLatestFireworkId(ctx echo.Context) error
 	CreateFirework(ctx echo.Context) error
 	DeleteFirework(ctx echo.Context, id int64) error
 	UpdateFirework(ctx echo.Context, id int64) error
@@ -52,6 +53,14 @@ func (h *fireworkHandler) GetFireworkById(ctx echo.Context, id int64, params ope
 		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "not found"})
 	}
 	return ctx.JSON(http.StatusOK, firework)
+}
+
+func (h *fireworkHandler) GetLatestFireworkId(ctx echo.Context) error {
+	latestId, err := h.Usecase.GetLatestFireworkId(ctx.Request().Context())
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to retrieve latest firework id"})
+	}
+	return ctx.JSON(http.StatusOK, openapi.LatestFireworkIdResponse{LatestId: latestId})
 }
 
 func (h *fireworkHandler) CreateFirework(ctx echo.Context) error {
