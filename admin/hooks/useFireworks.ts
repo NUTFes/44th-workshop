@@ -151,23 +151,29 @@ export function useFireworks() {
 
   // ---- API handlers ----
 
-  const fetchLatestId = useCallback(async () => {
+  // 花火の削除は論理削除であり、DBのID採番（シーケンス）は削除しても巻き戻らない。
+  // そのため「次のID」は削除済みを含めた最大IDをAPIから取得して算出する必要があり、
+  // 表示中（削除済みを除いた）の花火一覧から計算すると、直近削除したIDが最大だった場合に
+  // 実際にDBが採番するIDより小さい値を予測してしまう。API呼び出しに失敗した場合のみ、
+  // 苦肉の策として渡された一覧（fallbackList）から計算する。
+  // fallbackList は呼び出し側に明示的に渡してもらう（state の fireworks を直接参照すると、
+  // この関数が fireworks の変更のたびに再生成され、これに依存する fetchFireworks も
+  // 再生成されて mount 時 useEffect が無限に再実行されてしまうため）。
+  const fetchLatestId = useCallback(async (fallbackList: Firework[]) => {
     try {
       const response = await fetch(`${API_URL}/fireworks/latest-id`);
       if (response.ok) {
         const data = await response.json();
         const latestId = data.latestId || 0;
         setNextId(latestId + 1);
-      } else {
-        const maxId = fireworks.length > 0 ? Math.max(...fireworks.map(f => f.id)) : 0;
-        setNextId(maxId + 1);
+        return;
       }
     } catch (err) {
       console.warn('Failed to fetch latest ID, calculating from existing data:', err);
-      const maxId = fireworks.length > 0 ? Math.max(...fireworks.map(f => f.id)) : 0;
-      setNextId(maxId + 1);
     }
-  }, [API_URL, fireworks]);
+    const maxId = fallbackList.length > 0 ? Math.max(...fallbackList.map(f => f.id)) : 0;
+    setNextId(maxId + 1);
+  }, [API_URL]);
 
   const fetchFireworks = useCallback(async () => {
     setLoading(true);
@@ -186,14 +192,10 @@ export function useFireworks() {
       const fireworksData = Array.isArray(data) ? data : [];
       setFireworks(fireworksData);
 
-      await loadAllImagesFromLocalStorage(fireworksData);
-
-      if (fireworksData.length > 0) {
-        const maxId = Math.max(...fireworksData.map((f: Firework) => f.id));
-        setNextId(maxId + 1);
-      } else {
-        setNextId(1);
-      }
+      await Promise.all([
+        loadAllImagesFromLocalStorage(fireworksData),
+        fetchLatestId(fireworksData),
+      ]);
 
       setError(null);
     } catch (err) {
@@ -205,7 +207,7 @@ export function useFireworks() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL, loadAllImagesFromLocalStorage]);
+  }, [API_URL, loadAllImagesFromLocalStorage, fetchLatestId]);
 
   const selectFirework = useCallback((firework: Firework | null) => {
     setSelectedFirework(firework);
@@ -233,7 +235,7 @@ export function useFireworks() {
 
     setIsCreating(true);
     try {
-      await fetchLatestId();
+      await fetchLatestId(fireworks);
 
       const formData = new FormData();
       formData.append('image', selectedFile);
@@ -275,10 +277,10 @@ export function useFireworks() {
     } finally {
       setIsCreating(false);
     }
-  }, [selectedFile, isShareable, API_URL, fetchFireworks, fetchLatestId, saveImageToLocalStorage]);
+  }, [selectedFile, isShareable, API_URL, fireworks, fetchFireworks, fetchLatestId, saveImageToLocalStorage]);
 
   const deleteFirework = useCallback(async (fireworkId: number) => {
-    if (!confirm(`Are you sure you want to delete firework #${fireworkId}? This action cannot be undone.`)) {
+    if (!confirm(`花火 #${fireworkId} を削除します。よろしいですか？この操作は取り消せません。`)) {
       return;
     }
 

@@ -27,6 +27,7 @@ type fireworkUsecase struct {
 type FireworkUsecase interface {
 	GetFireworks(ctx context.Context, from, to *time.Time) ([]openapi.FireworkResponse, error)
 	GetFireworkByID(ctx context.Context, id int64) (openapi.FireworkResponse, error)
+	GetLatestFireworkId(ctx context.Context) (int64, error)
 	CreateFirework(ctx context.Context, req openapi.FireworkCreateRequest) (openapi.FireworkResponse, error)
 	DeleteFirework(ctx context.Context, id int64) error
 	UpdateFirework(ctx context.Context, id int64, req openapi.FireworkUpdateRequest) (openapi.FireworkResponse, error)
@@ -92,6 +93,22 @@ func (uc *fireworkUsecase) GetFireworkByID(ctx context.Context, id int64) (opena
 		CreatedAt:   &fw.CreatedAt,
 		UpdatedAt:   &fw.UpdatedAt,
 	}, nil
+}
+
+// GetLatestFireworkId は、これまでに作成された花火の最大ID（削除済みを含む）を返す。
+// 論理削除（soft delete）で行が物理的に残り続けるうえ、DBの id はシーケンス採番で
+// 削除しても巻き戻らないため、"削除済みを除いた最大ID + 1" では実際に採番されるIDと
+// ズレる。Unscoped() で削除済み行も含めて MAX(id) を取ることで、DBの次の採番値と一致させる。
+func (uc *fireworkUsecase) GetLatestFireworkId(ctx context.Context) (int64, error) {
+	var latestId int64
+	if err := uc.db.WithContext(ctx).
+		Unscoped().
+		Model(&domain.Firework{}).
+		Select("COALESCE(MAX(id), 0)").
+		Scan(&latestId).Error; err != nil {
+		return 0, fmt.Errorf("failed to retrieve latest firework id: %w", err)
+	}
+	return latestId, nil
 }
 
 func (uc *fireworkUsecase) CreateFirework(ctx context.Context, req openapi.FireworkCreateRequest) (openapi.FireworkResponse, error) {
