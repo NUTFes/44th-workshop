@@ -20,6 +20,8 @@ interface FireworkProps {
   expandTime?: number;
   /** フェードアウト時間（秒） */
   fadeTime?: number;
+  /** 打ち上げ（トレイル）の所要時間（秒） */
+  launchDuration?: number;
   /** 画像から変換したカラーパーティクルデータ（省略時は既存の boolean[][] を使用） */
   particleData?: ColorParticleData;
   /** 後方互換：白黒 boolean[][] データ（particleData が無い場合に使用） */
@@ -42,6 +44,7 @@ const IllustrationFireworks = memo(function IllustrationFireworks({
                                                                     starSize = 0.15,
                                                                     expandTime = 0.8,
                                                                     fadeTime = 1.5,
+                                                                    launchDuration = 2,
                                                                     particleData,
                                                                     data,
                                                                     isSoundEnabled = true,
@@ -70,7 +73,7 @@ const IllustrationFireworks = memo(function IllustrationFireworks({
             <Launching
                 from={from}
                 to={to}
-                duration={2}
+                duration={launchDuration}
                 color={color}
                 isSoundEnabled={isSoundEnabled}
                 onComplete={() => {

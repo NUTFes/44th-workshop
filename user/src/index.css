@@ -5,3 +5,77 @@ html, body, #root {
   padding: 0;
   overflow: hidden; /* スクロールバーを消す */
 }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* ===== オーバーレイUI用の最小限のアニメーション・ユーティリティ =====
+ * インラインstyle（CSSProperties）では :active や @keyframes が書けないため、
+ * これらだけをクラスとして切り出し、色・寸法は引き続き homeStyles.ts 側で持つ */
+
+.hb-pressable {
+  transition: transform 0.12s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+.hb-pressable:active {
+  transform: scale(0.97);
+}
+
+.hb-launch:active {
+  box-shadow: 0 3px 10px rgba(240, 184, 16, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.hb-chevron {
+  display: inline-block;
+  transition: transform 0.22s ease;
+}
+.hb-chevron--open {
+  transform: rotate(180deg);
+}
+
+.hb-reveal {
+  animation: hb-slide-down 0.22s ease;
+}
+
+.hb-spin {
+  animation: hb-spin 0.8s linear infinite;
+}
+
+@keyframes hb-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hb-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hb-pressable,
+  .hb-chevron,
+  .hb-reveal,
+  .hb-spin {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -13,19 +13,27 @@ import { toSameOriginUrl } from '../config/apiConfig';
 import { useGetFireworkById } from '../apiClient/fireworks/myARProjectAPI';
 import ScanModal from '../components/common/ScanModal';
 import type { HomeCanvasHandle } from '../canvas/HomeCanvas';
+import { MdSettings, MdExpandMore, MdRestartAlt, MdQrCodeScanner } from 'react-icons/md';
 
 import HomeCanvas from "../canvas/HomeCanvas";
 import {
   overlayContainerStyle,
   panelStyle,
-  primaryButtonStyle,
-  secondaryButtonStyle,
-  statusPillStyle,
+  launchButtonStyle,
+  ghostButtonStyle,
+  ghostButtonIconStyle,
+  spinnerStyle,
   errorPillStyle,
+  settingsToggleButtonStyle,
+  settingsToggleLabelRowStyle,
+  settingsIconBadgeStyle,
+  settingsChevronStyle,
+  settingsSectionStyle,
   qualityRowContainerStyle,
   qualityLabelStyle,
-  qualityRowStyle,
-  qualityButtonStyle,
+  segmentedContainerStyle,
+  segmentedIndicatorStyle,
+  segmentedButtonStyle,
 } from './homeStyles';
 
 // 画質レベル: 値が大きいほど画像を細かいグリッドに分解し、粒子数が増えて精細になる（その分重くなる）
@@ -48,6 +56,10 @@ export default function Home() {
   const [resolution, setResolution] = useState(64);
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // 詳細設定（画質・カメラのリセット・QRコードをスキャン）の開閉。花火の表示領域を広く取るため既定は閉じる
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const homeCanvasRef = useRef<HomeCanvasHandle>(null);
 
@@ -130,6 +142,8 @@ export default function Home() {
   const handleLaunch = () => {
     homeCanvasRef.current?.handleLaunch();
     resetCameraRotation();
+    // 打ち上げた瞬間にパネルを縮め、花火の視界を確保する
+    setIsSettingsOpen(false);
   };
 
   const resetCameraRotation = () => {
@@ -137,6 +151,15 @@ export default function Home() {
   };
 
   const isReady = !!particleData && !isConverting;
+  const currentQualityIndex = QUALITY_LEVELS.findIndex((level) => level.resolution === resolution);
+  // 読み込み中・変換中も打ち上げボタンを表示したまま disabled にし、パネルの高さが変わらないようにする
+  const showLaunchButton = isLoading || isConverting || isReady;
+  const hasLoadFailed = !showLaunchButton;
+
+  // 読み込みに失敗したときは、QRコードをスキャンをすぐ押せるようパネルを自動で開く
+  useEffect(() => {
+    if (hasLoadFailed) setIsSettingsOpen(true);
+  }, [hasLoadFailed]);
 
   return (
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -148,48 +171,79 @@ export default function Home() {
 
         <div style={overlayContainerStyle}>
           <div style={panelStyle}>
-            {/* 画質セレクタ（低32 / 中64 / 高128） */}
-            <div style={qualityRowContainerStyle}>
-              <span style={qualityLabelStyle}>画質</span>
-              <div style={qualityRowStyle}>
-                {QUALITY_LEVELS.map((level) => (
-                    <button
-                        key={level.resolution}
-                        onClick={() => setResolution(level.resolution)}
-                        disabled={isConverting}
-                        style={qualityButtonStyle(resolution === level.resolution)}
-                    >
-                      {level.label}
-                    </button>
-                ))}
-              </div>
-            </div>
+            {/* 詳細設定（画質・カメラのリセット・QRコードをスキャン）は既定で閉じておき、花火と重なる面積を減らす */}
+            <button
+                onClick={() => setIsSettingsOpen((prev) => !prev)}
+                style={settingsToggleButtonStyle(isSettingsOpen)}
+                className="hb-pressable"
+                aria-expanded={isSettingsOpen}
+                aria-controls="home-settings"
+            >
+              <span style={settingsToggleLabelRowStyle}>
+                <span style={settingsIconBadgeStyle(isSettingsOpen)}>
+                  <MdSettings />
+                </span>
+                設定
+              </span>
+              <MdExpandMore
+                  className={`hb-chevron${isSettingsOpen ? ' hb-chevron--open' : ''}`}
+                  style={settingsChevronStyle}
+              />
+            </button>
 
-            {isLoading || isConverting ? (
-                <div style={statusPillStyle}>
-                  {isLoading ? '読み込み中...' : '画像を変換中...'}
-                </div>
-            ) : isReady ? (
-                <>
-                  <button onClick={handleLaunch} style={primaryButtonStyle}>
-                    🎆 花火を打ち上げる
+            {isSettingsOpen && (
+                <div id="home-settings" style={settingsSectionStyle} className="hb-reveal">
+                  {/* 画質セレクタ（低32 / 中64 / 高128） */}
+                  <div style={qualityRowContainerStyle}>
+                    <span style={qualityLabelStyle}>解像度</span>
+                    <div style={segmentedContainerStyle}>
+                      <div style={segmentedIndicatorStyle(Math.max(currentQualityIndex, 0), QUALITY_LEVELS.length)} />
+                      {QUALITY_LEVELS.map((level) => (
+                          <button
+                              key={level.resolution}
+                              onClick={() => setResolution(level.resolution)}
+                              disabled={isConverting}
+                              style={segmentedButtonStyle(resolution === level.resolution)}
+                          >
+                            {level.label}
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {isReady && (
+                      <button onClick={resetCameraRotation} style={ghostButtonStyle} className="hb-pressable">
+                        <MdRestartAlt style={ghostButtonIconStyle} />
+                        カメラのリセット
+                      </button>
+                  )}
+
+                  {/* QRコードのスキャンは折りたたみ内に置き、閉じている間は花火の視界を確保する */}
+                  <button onClick={() => setIsOpen(true)} style={ghostButtonStyle} className="hb-pressable">
+                    <MdQrCodeScanner style={ghostButtonIconStyle} />
+                    QRコードをスキャン
                   </button>
-                  <button onClick={resetCameraRotation} style={secondaryButtonStyle}>
-                    カメラのリセット
-                  </button>
-                </>
-            ) : (
-                <div style={errorPillStyle}>
-                  花火が読み込めませんでした<br />
-                  別のQRコードをスキャンしてください
                 </div>
             )}
-
-            {/* QRコードのスキャンはどの状態でも常に行えるようにする */}
-            <button onClick={() => setIsOpen(true)} style={secondaryButtonStyle}>
-              QRコードをスキャン
-            </button>
           </div>
+
+          {/* 打ち上げボタンはローディング／変換中も disabled のまま表示し、パネルの高さを揺らさない */}
+          {showLaunchButton ? (
+              <button
+                  onClick={handleLaunch}
+                  disabled={!isReady}
+                  style={launchButtonStyle(!isReady)}
+                  className="hb-pressable hb-launch"
+              >
+                {!isReady && <span className="hb-spin" style={spinnerStyle} />}
+                {isLoading ? '読み込み中...' : isConverting ? '画像を変換中...' : '花火を打ち上げる'}
+              </button>
+          ) : (
+              <div style={errorPillStyle}>
+                花火が読み込めませんでした<br />
+                別のQRコードをスキャンしてください
+              </div>
+          )}
         </div>
 
         <ScanModal
