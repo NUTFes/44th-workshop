@@ -43,18 +43,18 @@ export default function Home() {
             onShareableChange={f.setIsShareable}
             onCreate={f.createFirework}
           />
-
-          {f.selectedFirework && (
-            <QRCodePanel
-              firework={f.selectedFirework}
-              qrUrl={f.generateQRUrl(f.selectedFirework)}
-              originalImageFile={f.originalImageFiles.get(f.selectedFirework.id)}
-              onDownload={f.handleQRDownload}
-              onError={(error) => f.setError(error)}
-              onClose={() => f.selectFirework(null)}
-            />
-          )}
         </div>
+
+        {f.selectedFirework && (
+          <QRCodePanel
+            firework={f.selectedFirework}
+            qrUrl={f.generateQRUrl(f.selectedFirework)}
+            originalImageFile={f.originalImageFiles.get(f.selectedFirework.id)}
+            onDownload={f.handleQRDownload}
+            onError={(error) => f.setError(error)}
+            onClose={() => f.selectFirework(null)}
+          />
+        )}
 
         <RefreshButton
           loading={f.loading}
