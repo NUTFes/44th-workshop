@@ -4,6 +4,7 @@ import { FC, useRef, useCallback, useState } from "react";
 import Image from "next/image";
 import QRCodeButtons from "./QRCodeButtons";
 import ImagePreview from "./admin/ImagePreview";
+import { createImage } from "@/utils/cropImage";
 
 interface QRCodeProps {
     url: string;
@@ -13,6 +14,23 @@ interface QRCodeProps {
     imageUrl: string | null;
     onDownload?: (canvas: HTMLCanvasElement) => void;
     onError?: (error: string) => void;
+}
+
+// Blob/File を dataURL 文字列に変換する共通ヘルパー
+function blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result;
+            if (typeof result === 'string') {
+                resolve(result);
+            } else {
+                reject(new Error('Blobを文字列として読み込むことに失敗しました。'));
+            }
+        };
+        reader.onerror = () => reject(new Error('Blobの読み込みに失敗しました。'));
+        reader.readAsDataURL(blob);
+    });
 }
 
 // jsPDFの標準フォント（Helvetica等）は日本語グリフを持たないため、PDF内の日本語ラベルが
@@ -33,14 +51,23 @@ async function loadFontAsBase64(url: string): Promise<string> {
     return btoa(binary);
 }
 
+// PDF生成のたびに約87KBのフォントを再取得・再エンコードしないよう、初回取得分を
+// モジュールスコープにキャッシュして使い回す（失敗時は次回呼び出しで再取得できるようにする）。
+let fontBase64Promise: Promise<string> | null = null;
+function getFontBase64(): Promise<string> {
+    if (!fontBase64Promise) {
+        fontBase64Promise = loadFontAsBase64('/fonts/NotoSansJP-subset.ttf').catch((err) => {
+            fontBase64Promise = null;
+            throw err;
+        });
+    }
+    return fontBase64Promise;
+}
+
 // dataURL画像の実寸（px）を取得する
-function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
-    return new Promise((resolve, reject) => {
-        const img = new window.Image();
-        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-        img.onerror = () => reject(new Error('Failed to load image for size measurement'));
-        img.src = dataUrl;
-    });
+async function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
+    const img = await createImage(dataUrl);
+    return { width: img.naturalWidth, height: img.naturalHeight };
 }
 
 // CSSの object-fit: contain と同じロジック。box内に元の縦横比を保ったまま収まる
@@ -128,22 +155,15 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             // jsPDFを動的にインポート
             const { jsPDF } = await import('jspdf');
 
+            // QRコードの取得は他の画像・フォント読み込みと独立しているため、
+            // ここで先に開始しておき（fetch呼び出し自体で通信が始まる）、
+            // 実際に必要になるタイミングでまとめて await することで並行実行する
+            const qrFetchPromise = fetch(qrImageUrl);
+
             let originalImageDataUrl = '';
             if (originalImageFile) {
                 try {
-                    originalImageDataUrl = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                            const result = reader.result;
-                            if (typeof result === 'string') {
-                                resolve(result);
-                            } else {
-                                reject('画像ファイルを文字列として読み込むことに失敗しました。');
-                            }
-                        };
-                        reader.onerror = () => reject('画像ファイルの読み込みに失敗しました');
-                        reader.readAsDataURL(originalImageFile);
-                    });
+                    originalImageDataUrl = await blobToDataUrl(originalImageFile);
                 } catch (fileError) {
                     console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
                 }
@@ -156,20 +176,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                 try {
                     const imageResponse = await fetch(imageUrl);
                     if (imageResponse.ok) {
-                        const imageBlob = await imageResponse.blob();
-                        originalImageDataUrl = await new Promise<string>((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const result = reader.result;
-                                if (typeof result === 'string') {
-                                    resolve(result);
-                                } else {
-                                    reject('画像を文字列として読み込むことに失敗しました。');
-                                }
-                            };
-                            reader.onerror = () => reject('画像の読み込みに失敗しました');
-                            reader.readAsDataURL(imageBlob);
-                        });
+                        originalImageDataUrl = await blobToDataUrl(await imageResponse.blob());
                     }
                 } catch (fetchError) {
                     console.warn('サーバー上の画像の取得に失敗しました:', fetchError);
@@ -177,27 +184,14 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             }
 
             // QRコードの画像を取得
-            const qrResponse = await fetch(qrImageUrl);
+            const qrResponse = await qrFetchPromise;
             if (!qrResponse.ok) {
                 if (onError) {
                     onError('QRコードの取得に失敗しました');
                 }
                 return;
             }
-            const qrBlob = await qrResponse.blob();
-            const qrDataUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const result = reader.result;
-                    if (typeof result === 'string') {
-                        resolve(result);
-                    } else {
-                        reject('QRコードのBLOBを文字列として読み取れませんでした。');
-                    }
-                };
-                reader.onerror = () => reject('QRコードのBLOBを読み込めませんでした。');
-                reader.readAsDataURL(qrBlob);
-            });
+            const qrDataUrl = await blobToDataUrl(await qrResponse.blob());
 
             // PDFを作成 (A4縦向き)
             const pdf = new jsPDF({
@@ -208,7 +202,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
 
             // 日本語フォントを埋め込み、以降のすべての pdf.text() で使用する
             // （標準フォントのままだと日本語が文字化けするため）
-            const fontBase64 = await loadFontAsBase64('/fonts/NotoSansJP-subset.ttf');
+            const fontBase64 = await getFontBase64();
             pdf.addFileToVFS('NotoSansJP-subset.ttf', fontBase64);
             pdf.addFont('NotoSansJP-subset.ttf', 'NotoSansJP', 'normal');
             pdf.setFont('NotoSansJP');
@@ -245,8 +239,15 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             const qrPadding = 2;
             const qrBoxWidth = keychainWidth - (qrPadding * 2);
             const qrBoxHeight = keychainHeight - (qrPadding * 2);
-            const qrDims = await getImageDimensions(qrDataUrl);
-            const qrFit = fitContain(qrBoxWidth, qrBoxHeight, qrDims.width, qrDims.height);
+            // サイズ測定に失敗しても致命的ではないため、その場合は歪みには目をつぶり
+            // 枠いっぱいに配置する（PDF全体の生成を失敗させない）
+            let qrFit = { x: 0, y: 0, width: qrBoxWidth, height: qrBoxHeight };
+            try {
+                const qrDims = await getImageDimensions(qrDataUrl);
+                qrFit = fitContain(qrBoxWidth, qrBoxHeight, qrDims.width, qrDims.height);
+            } catch (qrDimError) {
+                console.warn('QRコードのサイズ測定に失敗しました。枠いっぱいに配置します:', qrDimError);
+            }
             pdf.addImage(qrDataUrl, 'PNG',
                 qrX + qrPadding + qrFit.x,
                 qrY + qrPadding + qrFit.y,
@@ -345,19 +346,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             let originalImageDataUrl = '';
             if (originalImageFile) {
                 try {
-                    originalImageDataUrl = await new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => {
-                            const result = reader.result;
-                            if (typeof result === 'string') {
-                                resolve(result);
-                            } else {
-                                reject('画像ファイルを文字列として読み込むことに失敗しました。');
-                            }
-                        };
-                        reader.onerror = () => reject('Failed to read image file');
-                        reader.readAsDataURL(originalImageFile);
-                    });
+                    originalImageDataUrl = await blobToDataUrl(originalImageFile);
                 } catch (fileError) {
                     console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
                 }
