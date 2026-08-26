@@ -15,6 +15,24 @@ interface QRCodeProps {
     onError?: (error: string) => void;
 }
 
+// jsPDFの標準フォント（Helvetica等）は日本語グリフを持たないため、PDF内の日本語ラベルが
+// 文字化けする。/public/fonts に置いた日本語対応フォント（このPDFで実際に使う文字だけに
+// サブセット化済み、詳細は public/fonts/README.md）を読み込んでBase64化し、jsPDFへ埋め込む。
+async function loadFontAsBase64(url: string): Promise<string> {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to load font: ${response.status}`);
+    }
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+}
+
 const QRCodeComponent: FC<QRCodeProps> = ({
                                               url,
                                               size = 250,
@@ -106,6 +124,33 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                 }
             }
 
+            // originalImageFile（ブラウザのlocalStorageキャッシュ）が無い場合は、
+            // サーバー上の画像URLを取得してdataURL化する（ダメでも下の addImage の
+            // catch でプレースホルダーに落ちるだけなので、ここは失敗しても無視してよい）
+            if (!originalImageDataUrl && imageUrl) {
+                try {
+                    const imageResponse = await fetch(imageUrl);
+                    if (imageResponse.ok) {
+                        const imageBlob = await imageResponse.blob();
+                        originalImageDataUrl = await new Promise<string>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const result = reader.result;
+                                if (typeof result === 'string') {
+                                    resolve(result);
+                                } else {
+                                    reject('画像を文字列として読み込むことに失敗しました。');
+                                }
+                            };
+                            reader.onerror = () => reject('画像の読み込みに失敗しました');
+                            reader.readAsDataURL(imageBlob);
+                        });
+                    }
+                } catch (fetchError) {
+                    console.warn('サーバー上の画像の取得に失敗しました:', fetchError);
+                }
+            }
+
             // QRコードの画像を取得
             const qrResponse = await fetch(qrImageUrl);
             if (!qrResponse.ok) {
@@ -135,6 +180,13 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                 unit: 'mm',
                 format: 'a4'
             });
+
+            // 日本語フォントを埋め込み、以降のすべての pdf.text() で使用する
+            // （標準フォントのままだと日本語が文字化けするため）
+            const fontBase64 = await loadFontAsBase64('/fonts/NotoSansJP-subset.ttf');
+            pdf.addFileToVFS('NotoSansJP-subset.ttf', fontBase64);
+            pdf.addFont('NotoSansJP-subset.ttf', 'NotoSansJP', 'normal');
+            pdf.setFont('NotoSansJP');
 
             const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
             // const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
@@ -217,7 +269,9 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             // 情報セクション
             const infoY = qrY + keychainHeight + 20;
             pdf.setFontSize(10);
-            pdf.text('🔑 アクリルキーホルダー情報', margin, infoY);
+            // 絵文字は埋め込みフォントのグリフに含まれない（色付き絵文字は簡易TTF埋め込みでは
+            // 描画できない）ため、PDF内のテキストからは除外する
+            pdf.text('アクリルキーホルダー情報', margin, infoY);
 
             pdf.setFontSize(8);
             pdf.text(`花火ID: ${fireworkId}`, margin, infoY + 8);
@@ -248,7 +302,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
         } finally {
             setIsGeneratingPDF(false);
         }
-    }, [qrImageUrl, fireworkId, originalImageFile, onError, url]);
+    }, [qrImageUrl, fireworkId, originalImageFile, imageUrl, onError, url]);
 
     // 印刷用のHTMLページを生成（アクリルキーホルダー用：45×32mm）
     const handleGeneratePrintPage = useCallback(async () => {
@@ -275,6 +329,13 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                     console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
                 }
             }
+
+            // originalImageFile はブラウザのlocalStorageにキャッシュされた画像で、
+            // 別のブラウザ・別のセッションで作成された花火や、30日経過してクリーンアップ
+            // された花火では取得できない。その場合はサーバー上の画像URL（常に利用可能）を
+            // そのまま <img src> に使う。表示のみで pixel を読み取るわけではないため、
+            // CORS の制約を受けない。
+            const printImageSrc = originalImageDataUrl || imageUrl || '';
 
             // 印刷用のHTMLを生成（アクリルキーホルダー用レイアウト）
             const printHTML = `
@@ -360,8 +421,8 @@ const QRCodeComponent: FC<QRCodeProps> = ({
     </div>
     
     <div class="keychain-item image-item">
-        ${originalImageDataUrl ?
-                `<img src="${originalImageDataUrl}" alt="Firework Design" class="image-keychain" />` :
+        ${printImageSrc ?
+                `<img src="${printImageSrc}" alt="Firework Design" class="image-keychain" />` :
                 `<div class="placeholder">Firework Design</div>`
             }
     </div>
@@ -420,7 +481,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
         } finally {
             setIsGeneratingPrint(false);
         }
-    }, [qrImageUrl, fireworkId, originalImageFile, onError]);
+    }, [qrImageUrl, fireworkId, originalImageFile, imageUrl, onError]);
 
     return (
         <div style={{ textAlign: 'center' }}>
