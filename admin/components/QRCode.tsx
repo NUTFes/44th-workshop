@@ -33,6 +33,31 @@ async function loadFontAsBase64(url: string): Promise<string> {
     return btoa(binary);
 }
 
+// dataURL画像の実寸（px）を取得する
+function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        img.onerror = () => reject(new Error('Failed to load image for size measurement'));
+        img.src = dataUrl;
+    });
+}
+
+// CSSの object-fit: contain と同じロジック。box内に元の縦横比を保ったまま収まる
+// 最大サイズと、box内で中央寄せするためのオフセットを返す。
+function fitContain(boxWidth: number, boxHeight: number, imageWidth: number, imageHeight: number) {
+    const boxAspect = boxWidth / boxHeight;
+    const imageAspect = imageWidth / imageHeight;
+    const width = imageAspect > boxAspect ? boxWidth : boxHeight * imageAspect;
+    const height = imageAspect > boxAspect ? boxWidth / imageAspect : boxHeight;
+    return {
+        x: (boxWidth - width) / 2,
+        y: (boxHeight - height) / 2,
+        width,
+        height,
+    };
+}
+
 const QRCodeComponent: FC<QRCodeProps> = ({
                                               url,
                                               size = 250,
@@ -215,13 +240,18 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             // 画像用の枠
             pdf.rect(imageX, imageY, keychainWidth, keychainHeight);
 
-            // QRコードを配置（少し余白を持たせる）
+            // QRコードを配置（少し余白を持たせる）。縦横比を保ったまま余白付きの枠内に
+            // 収まるサイズへ縮小し、中央寄せする（object-fit: contain と同じ考え方）
             const qrPadding = 2;
+            const qrBoxWidth = keychainWidth - (qrPadding * 2);
+            const qrBoxHeight = keychainHeight - (qrPadding * 2);
+            const qrDims = await getImageDimensions(qrDataUrl);
+            const qrFit = fitContain(qrBoxWidth, qrBoxHeight, qrDims.width, qrDims.height);
             pdf.addImage(qrDataUrl, 'PNG',
-                qrX + qrPadding,
-                qrY + qrPadding,
-                keychainWidth - (qrPadding * 2),
-                keychainHeight - (qrPadding * 2)
+                qrX + qrPadding + qrFit.x,
+                qrY + qrPadding + qrFit.y,
+                qrFit.width,
+                qrFit.height
             );
 
             // 画像を配置
@@ -234,11 +264,14 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                                 originalImageDataUrl.includes('data:image/gif') ? 'GIF' :
                                     originalImageDataUrl.includes('data:image/webp') ? 'WEBP' : 'JPEG';
 
+                    // 元画像の縦横比を保ったまま枠内に収まるサイズへ縮小し、中央寄せする
+                    const imgDims = await getImageDimensions(originalImageDataUrl);
+                    const imgFit = fitContain(keychainWidth, keychainHeight, imgDims.width, imgDims.height);
                     pdf.addImage(originalImageDataUrl, imageFormat,
-                        imageX,
-                        imageY,
-                        keychainWidth,
-                        keychainHeight
+                        imageX + imgFit.x,
+                        imageY + imgFit.y,
+                        imgFit.width,
+                        imgFit.height
                     );
 
                 } catch (imgError) {
