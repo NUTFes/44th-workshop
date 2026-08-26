@@ -52,7 +52,7 @@ export default function Home() {
             originalImageFile={f.originalImageFiles.get(f.selectedFirework.id)}
             onDownload={f.handleQRDownload}
             onError={(error) => f.setError(error)}
-            onClose={() => f.selectFirework(null)}
+            onClose={f.clearSelection}
           />
         )}
 

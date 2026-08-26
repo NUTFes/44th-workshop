@@ -33,7 +33,12 @@ export default function QRCodePanel({
 
   return (
     <div
-      onClick={onClose}
+      onClick={(e) => {
+        // ダイアログ内で始めたドラッグ（例: 会場URLの選択）が背景で終わると
+        // click の target がオーバーレイ自身になるため、target/currentTarget が
+        // 一致する場合のみ閉じる（背景そのものをクリックした場合のみ閉じる）
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -48,8 +53,7 @@ export default function QRCodePanel({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="花火のQRコード"
-        onClick={(e) => e.stopPropagation()}
+        aria-labelledby="qr-modal-title"
         style={{
           backgroundColor: 'white',
           borderRadius: '12px',
@@ -61,7 +65,7 @@ export default function QRCodePanel({
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
         }}
       >
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
+        <h2 id="qr-modal-title" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#2d3748' }}>
           📱 花火のQRコード #{firework.id}
         </h2>
         <div style={{ textAlign: 'center' }}>
