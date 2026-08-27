@@ -46,6 +46,12 @@ type FireworkUpdateRequest struct {
 	IsShareable bool `json:"isShareable"`
 }
 
+// LatestFireworkIdResponse 現在登録されている花火の最大ID（削除済みを含む）のレスポンス
+type LatestFireworkIdResponse struct {
+	// LatestId 花火が1件も存在しない場合は 0
+	LatestId int64 `json:"latestId"`
+}
+
 // GetFireworksParams クエリパラメータ
 type GetFireworksParams struct {
 	From *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
@@ -65,6 +71,9 @@ type UpdateFireworkJSONRequestBody = FireworkUpdateRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// 現在登録されている花火の最大ID（削除済みを含む）を取得する
+	// (GET /fireworks/latest-id)
+	GetLatestFireworkId(ctx echo.Context) error
 	// 花火の一覧を取得する
 	// (GET /fireworks)
 	GetFireworks(ctx echo.Context, params GetFireworksParams) error
@@ -103,6 +112,15 @@ func (w *ServerInterfaceWrapper) GetFireworks(ctx echo.Context) error {
 	}
 
 	err = w.Handler.GetFireworks(ctx, params)
+	return err
+}
+
+// GetLatestFireworkId converts echo context to params.
+func (w *ServerInterfaceWrapper) GetLatestFireworkId(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetLatestFireworkId(ctx)
 	return err
 }
 
@@ -197,6 +215,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/fireworks/latest-id", wrapper.GetLatestFireworkId)
 	router.GET(baseURL+"/fireworks", wrapper.GetFireworks)
 	router.POST(baseURL+"/fireworks", wrapper.CreateFirework)
 	router.DELETE(baseURL+"/fireworks/:id", wrapper.DeleteFirework)
