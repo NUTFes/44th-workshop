@@ -406,10 +406,8 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             height: 100%;
             object-fit: contain;
             box-sizing: border-box;
-            transform: rotate(90deg);
-            transform-origin: center;
         }
-        
+
         .qr-code-keychain {
             width: 100%;
             height: 100%;
