@@ -1,6 +1,6 @@
 import type { Area } from 'react-easy-crop';
 
-function createImage(src: string): Promise<HTMLImageElement> {
+export function createImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
