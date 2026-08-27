@@ -213,6 +213,13 @@ export function useFireworks() {
     setSelectedFirework(firework);
   }, []);
 
+  // 選択解除専用の安定した参照。onClose のようにコールバックとして渡す先
+  // （例: QRCodePanel の Escapeキー用 useEffect）が、渡し方によって毎レンダー
+  // 再生成されないようにする。
+  const clearSelection = useCallback(() => {
+    setSelectedFirework(null);
+  }, []);
+
   const handleQRDownload = useCallback((canvas: HTMLCanvasElement) => {
     if (selectedFirework) {
       const url = canvas.toDataURL('image/png');
@@ -365,6 +372,7 @@ export function useFireworks() {
     setSelectedFile,
     // handlers
     selectFirework,
+    clearSelection,
     createFirework,
     deleteFirework,
     fetchFireworks,
