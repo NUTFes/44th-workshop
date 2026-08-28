@@ -22,8 +22,8 @@ import {
 const DEMO_IMAGE_URL = '/demo/45th_logo.png';
 
 // AR花火の場所へ誘導する固定文言。文言変更はここだけ
-const DEMO_GUIDE_TITLE = '🎆 AR花火誘導文';
-const DEMO_GUIDE_TEXT = 'AR花火の宣伝とか\nどこでやってるか書くスペース';
+const DEMO_GUIDE_TITLE = '講義棟201でAR花火開催中！';
+const DEMO_GUIDE_TEXT = '描いた絵を花火にして打ち上げよう！';
 
 // 画質（Home の「中」相当。デモでは固定）
 const DEMO_RESOLUTION = 64;
