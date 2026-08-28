@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Detector from './pages/Detector';
 import Finale from './pages/Finale';
+import Demo from './pages/Demo';
 
 
 // ===== Appコンポーネント =====
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/" element={<Home />} />             {/* ホーム画面 */}
         <Route path="/detector" element={<Detector />} /> {/* ジャンプ検出画面 */}
         <Route path="/finale" element={<Finale />} />     {/* フィナーレ花火大会画面 */}
+        <Route path="/demo" element={<Demo />} />         {/* デモ画面 */}
       </Routes>
     </Router>
   )

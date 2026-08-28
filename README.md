@@ -26,5 +26,6 @@
     - イラスト花火：http://localhost:5173
     - ジャンプ花火：http://localhost:5173/detector
     - フィナーレ　：http://localhost:5173/finale
+    - デモ　　　　：http://localhost:5173/demo
   - 管理者画面　：http://localhost:3000
   - Swagger UI：http://localhost:8081（APIの動作確認などができます）
