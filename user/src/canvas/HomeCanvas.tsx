@@ -103,6 +103,26 @@ const CanvasSetup = forwardRef<CanvasSetupHandle>((_,  ref) => {
     camera.position.set(0, 0, 30);
   }, [camera]);
 
+  // WebGLコンテキストロスト（GPUリセットやビューポート変更等で発生しうる）に対して
+  // 何もハンドリングしないと、ブラウザは既定でコンテキストを復元しようとしない。
+  // preventDefault() で「復元を試みる」意思を明示し、致命的なクラッシュに繋がるのを防ぐ。
+  useEffect(() => {
+    const canvasEl = gl.domElement;
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.warn('WebGL context lost. Waiting for restoration...');
+    };
+    const handleContextRestored = () => {
+      console.info('WebGL context restored.');
+    };
+    canvasEl.addEventListener('webglcontextlost', handleContextLost, false);
+    canvasEl.addEventListener('webglcontextrestored', handleContextRestored, false);
+    return () => {
+      canvasEl.removeEventListener('webglcontextlost', handleContextLost);
+      canvasEl.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [gl]);
+
   const { resetCameraRotation, setCurrentAsInitial, setCameraRotation } = useDeviceMotionCamera(0.7);
 
   useImperativeHandle(ref, () => ({
