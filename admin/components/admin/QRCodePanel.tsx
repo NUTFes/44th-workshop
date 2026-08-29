@@ -9,8 +9,10 @@ interface QRCodePanelProps {
   firework: Firework;
   qrUrl: string;
   originalImageFile: File | undefined;
+  isTogglingShareable: boolean;
   onDownload: (canvas: HTMLCanvasElement) => void;
   onError: (error: string) => void;
+  onToggleShareable: (id: number, next: boolean) => void;
   onClose: () => void;
 }
 
@@ -18,8 +20,10 @@ export default function QRCodePanel({
   firework,
   qrUrl,
   originalImageFile,
+  isTogglingShareable,
   onDownload,
   onError,
+  onToggleShareable,
   onClose,
 }: QRCodePanelProps) {
   // Escapeキーでも閉じられるようにする（マウント中のみリスナーを張り、確実に解除する）
@@ -147,10 +151,28 @@ export default function QRCodePanel({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={() => onToggleShareable(firework.id, !firework.isShareable)}
+            disabled={isTogglingShareable}
             style={{
               ...secondaryButtonStyle,
               marginTop: '1.5rem',
+              padding: '0.75rem 1.5rem',
+              opacity: isTogglingShareable ? 0.6 : 1,
+              cursor: isTogglingShareable ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {isTogglingShareable
+              ? '⏳ 更新中...'
+              : firework.isShareable
+                ? '🔒 非公開にする'
+                : '🌐 公開にする'}
+          </button>
+
+          <button
+            onClick={onClose}
+            style={{
+              ...secondaryButtonStyle,
+              marginTop: '0.75rem',
               padding: '0.75rem 1.5rem',
             }}
           >

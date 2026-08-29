@@ -80,7 +80,8 @@ func (h *fireworkHandler) CreateFirework(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to convert file")
 	}
 
-	isShareable := false
+	// isShareable が指定されなかった場合は「公開」をデフォルトにする
+	isShareable := true
 	if values, exists := form.Value["isShareable"]; exists && len(values) > 0 {
 		isShareable = values[0] == "true"
 	}

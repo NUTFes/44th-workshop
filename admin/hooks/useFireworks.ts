@@ -15,9 +15,11 @@ export function useFireworks() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isShareable, setIsShareable] = useState(false);
+  // 花火作成時のデフォルトは「公開」
+  const [isShareable, setIsShareable] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
+  const [togglingShareableIds, setTogglingShareableIds] = useState<Set<number>>(new Set());
   const [originalImageFiles, setOriginalImageFiles] = useState<Map<number, File>>(new Map());
   const [nextId, setNextId] = useState<number>(1);
   const [selectedDate, setSelectedDate] = useState('');
@@ -275,7 +277,7 @@ export function useFireworks() {
 
       await fetchFireworks();
       setSelectedFile(null);
-      setIsShareable(false);
+      setIsShareable(true); // 次の作成フォームも「公開」をデフォルトに戻す
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -332,6 +334,45 @@ export function useFireworks() {
     }
   }, [API_URL, fetchFireworks, selectedFirework, removeImageFromLocalStorage]);
 
+  // 公開設定（isShareable）の切り替え。バックエンドの PUT /fireworks/{id} は既に実装済み。
+  const toggleShareable = useCallback(async (fireworkId: number, nextIsShareable: boolean) => {
+    setTogglingShareableIds(prev => new Set(prev).add(fireworkId));
+
+    try {
+      const response = await fetch(`${API_URL}/fireworks/${fireworkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isShareable: nextIsShareable }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = `HTTP error ${response.status}`;
+        console.error('Toggle shareable failed:', errorMessage);
+        setError(`公開設定の更新に失敗しました: ${errorMessage}`);
+        return;
+      }
+
+      await fetchFireworks();
+
+      // モーダルを開いたままでも表示が追従するよう、選択中の花火も更新する
+      setSelectedFirework(prev =>
+        prev && prev.id === fireworkId ? { ...prev, isShareable: nextIsShareable } : prev
+      );
+
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`公開設定の更新に失敗しました: ${errorMessage}`);
+      console.error('Error toggling shareable:', err);
+    } finally {
+      setTogglingShareableIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(fireworkId);
+        return newSet;
+      });
+    }
+  }, [API_URL, fetchFireworks]);
+
   // ---- effects ----
 
   useEffect(() => {
@@ -361,6 +402,7 @@ export function useFireworks() {
     isShareable,
     isCreating,
     deletingIds,
+    togglingShareableIds,
     originalImageFiles,
     nextId,
     selectedDate,
@@ -375,6 +417,7 @@ export function useFireworks() {
     clearSelection,
     createFirework,
     deleteFirework,
+    toggleShareable,
     fetchFireworks,
     handleQRDownload,
     generateQRUrl,

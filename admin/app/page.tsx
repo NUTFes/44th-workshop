@@ -50,8 +50,10 @@ export default function Home() {
             firework={f.selectedFirework}
             qrUrl={f.generateQRUrl(f.selectedFirework)}
             originalImageFile={f.originalImageFiles.get(f.selectedFirework.id)}
+            isTogglingShareable={f.togglingShareableIds.has(f.selectedFirework.id)}
             onDownload={f.handleQRDownload}
             onError={(error) => f.setError(error)}
+            onToggleShareable={f.toggleShareable}
             onClose={f.clearSelection}
           />
         )}

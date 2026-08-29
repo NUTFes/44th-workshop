@@ -65,7 +65,7 @@ paths:
                 $ref: "#/components/schemas/FireworkResponse"
   /fireworks/{id}:
     get:
-      summary: "IDで指定した花火を取得"
+      summary: "IDで指定した花火を取得（isShareable が false の場合は存在しない場合と同様に404を返す）"
       operationId: "GetFireworkById"
       parameters:
         - name: id

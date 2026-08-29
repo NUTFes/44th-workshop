@@ -83,7 +83,7 @@ type ServerInterface interface {
 	// IDで指定した花火を削除
 	// (DELETE /fireworks/{id})
 	DeleteFirework(ctx echo.Context, id int64) error
-	// IDで指定した花火を取得
+	// IDで指定した花火を取得（isShareable が false の場合は存在しない場合と同様に404を返す）
 	// (GET /fireworks/{id})
 	GetFireworkById(ctx echo.Context, id int64, params GetFireworkByIdParams) error
 	// IDで指定した花火の共有設定を更新
