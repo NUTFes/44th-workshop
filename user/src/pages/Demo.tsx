@@ -45,6 +45,7 @@ export default function Demo() {
       resolution: DEMO_RESOLUTION,
       whiteThreshold: 200,
       saturationThreshold: 30,
+      whiteSaturationRatio: 0.2,
       includeWhite: false,
     })
       .then((pd) => {
