@@ -24,6 +24,26 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    // three / @react-three/fiber が複数コピー存在すると、Bloom等が参照する
+    // useThree() の実体（zustandストア）がCanvas本体とズレて
+    // 「R3F: Hooks can only be used within the Canvas component!」が発生するため、
+    // 常に単一インスタンスに解決させる。
+    dedupe: ['three', '@react-three/fiber', '@react-three/postprocessing', 'postprocessing'],
+  },
+  optimizeDeps: {
+    // 上記の依存群がSuspense配下（HomeCanvas経由）でのみ読み込まれ、
+    // Vite起動時のスキャンで見つからず起動後に再最適化（再バンドル）が走ると、
+    // 既に読み込み済みのモジュールと新しいモジュールが二重インスタンス化してしまう。
+    // 事前に明示してコールドスタート時点で一括プリバンドルさせ、再最適化を防ぐ。
+    include: [
+      'three',
+      '@react-three/fiber',
+      '@react-three/drei',
+      '@react-three/postprocessing',
+      'postprocessing',
+    ],
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

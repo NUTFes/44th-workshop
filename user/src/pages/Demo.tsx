@@ -6,9 +6,9 @@ import type { HomeCanvasHandle } from '../canvas/HomeCanvas';
 import {
   overlayContainerStyle,
   panelStyle,
-  primaryButtonStyle,
-  secondaryButtonStyle,
-  statusPillStyle,
+  launchButtonStyle,
+  ghostButtonStyle,
+  spinnerStyle,
   errorPillStyle,
 } from './homeStyles';
 import {
@@ -71,6 +71,9 @@ export default function Demo() {
   };
 
   const isReady = !!particleData && !isConverting;
+  // 変換中も打ち上げボタンを表示したまま disabled にし、パネルの高さが変わらないようにする
+  // （Home.tsx と同じ表示規約）
+  const showLaunchButton = isConverting || isReady;
 
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
@@ -90,19 +93,24 @@ export default function Demo() {
 
       <div style={overlayContainerStyle}>
         <div style={panelStyle}>
-          {isConverting ? (
-            <div style={statusPillStyle}>画像を変換中...</div>
-          ) : isReady ? (
-            <>
-              <button onClick={handleLaunch} style={primaryButtonStyle}>
-                🎆 花火を打ち上げる
-              </button>
-              <button onClick={resetCameraRotation} style={secondaryButtonStyle}>
-                カメラのリセット
-              </button>
-            </>
+          {showLaunchButton ? (
+            <button
+              onClick={handleLaunch}
+              disabled={!isReady}
+              style={launchButtonStyle(!isReady)}
+              className="hb-pressable hb-launch"
+            >
+              {!isReady && <span className="hb-spin" style={spinnerStyle} />}
+              {isConverting ? '画像を変換中...' : '花火を打ち上げる'}
+            </button>
           ) : (
             <div style={errorPillStyle}>{error ?? '花火が読み込めませんでした'}</div>
+          )}
+
+          {isReady && (
+            <button onClick={resetCameraRotation} style={ghostButtonStyle} className="hb-pressable">
+              カメラのリセット
+            </button>
           )}
         </div>
       </div>
