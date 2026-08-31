@@ -5,6 +5,7 @@ import Image from "next/image";
 import QRCodeButtons from "./QRCodeButtons";
 import ImagePreview from "./admin/ImagePreview";
 import { createImage } from "@/utils/cropImage";
+import { removeWhiteBackground } from "@/utils/removeWhiteBackground";
 
 interface QRCodeProps {
     url: string;
@@ -31,6 +32,29 @@ function blobToDataUrl(blob: Blob): Promise<string> {
         reader.onerror = () => reject(new Error('Blobの読み込みに失敗しました。'));
         reader.readAsDataURL(blob);
     });
+}
+
+// localStorageに残っている元ファイルを優先し、無ければサーバー上の画像を取得する。
+// Canvasで安全に画素を読み取れるよう、どちらの場合もdata URLへ変換して返す。
+async function resolveOriginalImageDataUrl(
+    originalImageFile?: File,
+    imageUrl?: string | null
+): Promise<string> {
+    if (originalImageFile) {
+        try {
+            return await blobToDataUrl(originalImageFile);
+        } catch (fileError) {
+            console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
+        }
+    }
+
+    if (!imageUrl) return '';
+
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+        throw new Error(`サーバー上の画像の取得に失敗しました: ${imageResponse.status}`);
+    }
+    return blobToDataUrl(await imageResponse.blob());
 }
 
 // jsPDFの標準フォント（Helvetica等）は日本語グリフを持たないため、PDF内の日本語ラベルが
@@ -160,31 +184,17 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             // 実際に必要になるタイミングでまとめて await することで並行実行する
             const qrFetchPromise = fetch(qrImageUrl);
 
-            let originalImageDataUrl = '';
-            if (originalImageFile) {
-                try {
-                    originalImageDataUrl = await blobToDataUrl(originalImageFile);
-                } catch (fileError) {
-                    console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
-                }
-            }
-
-            // originalImageFile（ブラウザのlocalStorageキャッシュ）が無い場合は、
-            // サーバー上の画像URLを取得してdataURL化する（ダメでも下の addImage の
-            // catch でプレースホルダーに落ちるだけなので、ここは失敗しても無視してよい）
-            if (!originalImageDataUrl && imageUrl) {
-                try {
-                    const imageResponse = await fetch(imageUrl);
-                    if (imageResponse.ok) {
-                        originalImageDataUrl = await blobToDataUrl(await imageResponse.blob());
-                    }
-                } catch (fetchError) {
-                    console.warn('サーバー上の画像の取得に失敗しました:', fetchError);
-                }
-            }
+            // PDFには背景付きの元画像ではなく、花火部分だけを残した透過PNGを埋め込む。
+            const transparentImagePromise = resolveOriginalImageDataUrl(
+                originalImageFile,
+                imageUrl
+            ).then((source) => source ? removeWhiteBackground(source) : '');
 
             // QRコードの画像を取得
-            const qrResponse = await qrFetchPromise;
+            const [qrResponse, transparentImageDataUrl] = await Promise.all([
+                qrFetchPromise,
+                transparentImagePromise,
+            ]);
             if (!qrResponse.ok) {
                 if (onError) {
                     onError('QRコードの取得に失敗しました');
@@ -256,19 +266,12 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             );
 
             // 画像を配置
-            if (originalImageDataUrl) {
+            if (transparentImageDataUrl) {
                 try {
-                    // 画像の形式を自動検出
-                    const imageFormat = originalImageDataUrl.includes('data:image/png') ? 'PNG' :
-                        originalImageDataUrl.includes('data:image/jpeg') ? 'JPEG' :
-                            originalImageDataUrl.includes('data:image/jpg') ? 'JPEG' :
-                                originalImageDataUrl.includes('data:image/gif') ? 'GIF' :
-                                    originalImageDataUrl.includes('data:image/webp') ? 'WEBP' : 'JPEG';
-
-                    // 元画像の縦横比を保ったまま枠内に収まるサイズへ縮小し、中央寄せする
-                    const imgDims = await getImageDimensions(originalImageDataUrl);
+                    // 透過PNGの縦横比を保ったまま枠内に収め、中央寄せする
+                    const imgDims = await getImageDimensions(transparentImageDataUrl);
                     const imgFit = fitContain(keychainWidth, keychainHeight, imgDims.width, imgDims.height);
-                    pdf.addImage(originalImageDataUrl, imageFormat,
+                    pdf.addImage(transparentImageDataUrl, 'PNG',
                         imageX + imgFit.x,
                         imageY + imgFit.y,
                         imgFit.width,
@@ -343,21 +346,14 @@ const QRCodeComponent: FC<QRCodeProps> = ({
         setIsGeneratingPrint(true);
 
         try {
-            let originalImageDataUrl = '';
-            if (originalImageFile) {
-                try {
-                    originalImageDataUrl = await blobToDataUrl(originalImageFile);
-                } catch (fileError) {
-                    console.warn('元の画像ファイルの読み込みに失敗しました:', fileError);
-                }
-            }
-
-            // originalImageFile はブラウザのlocalStorageにキャッシュされた画像で、
-            // 別のブラウザ・別のセッションで作成された花火や、30日経過してクリーンアップ
-            // された花火では取得できない。その場合はサーバー上の画像URL（常に利用可能）を
-            // そのまま <img src> に使う。表示のみで pixel を読み取るわけではないため、
-            // CORS の制約を受けない。
-            const printImageSrc = originalImageDataUrl || imageUrl || '';
+            const originalImageDataUrl = await resolveOriginalImageDataUrl(
+                originalImageFile,
+                imageUrl
+            );
+            // 印刷ページもPDFと同じ透過PNGを使い、白背景を印刷しない。
+            const printImageSrc = originalImageDataUrl
+                ? await removeWhiteBackground(originalImageDataUrl)
+                : '';
 
             // 印刷用のHTMLを生成（アクリルキーホルダー用レイアウト）
             const printHTML = `
