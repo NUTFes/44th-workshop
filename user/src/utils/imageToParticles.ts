@@ -74,7 +74,16 @@ async function fetchResizedPixels(
                 reject(new Error('Failed to get 2D canvas context'));
                 return;
             }
-            ctx.drawImage(img, 0, 0, n, n);
+            // 管理画面のPDF・印刷ページは object-fit: contain 相当（縦横比を保ったまま
+            // 枠内に収め、余白を残す）で画像を配置している。ここも同じ contain 方式にすることで、
+            // アップロード時にクロップした正方形の領域と、印刷される領域・花火になる領域を
+            // 一致させる（非正方形の画像が来ても引き伸ばさず、余白として除外されるだけにする）。
+            const scale = Math.min(n / img.naturalWidth, n / img.naturalHeight);
+            const drawWidth = img.naturalWidth * scale;
+            const drawHeight = img.naturalHeight * scale;
+            const offsetX = (n - drawWidth) / 2;
+            const offsetY = (n - drawHeight) / 2;
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             const imageData = ctx.getImageData(0, 0, n, n);
             resolve(imageData.data);
         };
