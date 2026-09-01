@@ -3,10 +3,17 @@ import type { ColorParticle, ColorParticleData } from '../types/illustrationFire
 export interface ImageToParticlesOptions {
     /** リサイズ後の一辺のピクセル数（デフォルト: 64） */
     resolution?: number;
-    /** 白とみなすRGBしきい値 0〜255（デフォルト: 200） */
+    /** 白とみなす知覚輝度のしきい値 0〜255（デフォルト: 200） */
     whiteThreshold?: number;
     /** 彩度しきい値 max-min（デフォルト: 30）これ未満はノイズとして除外 */
     saturationThreshold?: number;
+    /**
+     * 白判定用の相対彩度（HSVのS = (max-min)/max）しきい値 0〜1（デフォルト: 0.2）。
+     * 値を上げるほど、写真撮影した白紙の照明カブリング（暖色/寒色寄りの白）を
+     * 白として除外しやすくなる代わり、淡いパステルカラーのインクも白として
+     * 消えやすくなるトレードオフがある。実際の描画で調整する前提のパラメータ。
+     */
+    whiteSaturationRatio?: number;
     /** 白ピクセルも半透明粒子として含める（デフォルト: false） */
     includeWhite?: boolean;
 }
@@ -26,6 +33,7 @@ export async function imageUrlToParticles(
         resolution = 64,
         whiteThreshold = 200,
         saturationThreshold = 30,
+        whiteSaturationRatio = 0.2,
         includeWhite = false,
     } = options;
 
@@ -33,6 +41,7 @@ export async function imageUrlToParticles(
     const particles = extractParticles(pixels, resolution, {
         whiteThreshold,
         saturationThreshold,
+        whiteSaturationRatio,
         includeWhite,
     });
 
@@ -81,6 +90,7 @@ async function fetchResizedPixels(
 interface FilterOptions {
     whiteThreshold: number;
     saturationThreshold: number;
+    whiteSaturationRatio: number;
     includeWhite: boolean;
 }
 
@@ -90,7 +100,7 @@ function extractParticles(
     n: number,
     opts: FilterOptions
 ): ColorParticle[] {
-    const { whiteThreshold, saturationThreshold, includeWhite } = opts;
+    const { whiteThreshold, saturationThreshold, whiteSaturationRatio, includeWhite } = opts;
     const particles: ColorParticle[] = [];
 
     for (let py = 0; py < n; py++) {
@@ -102,10 +112,23 @@ function extractParticles(
             const b = data[idx + 2];
             // alpha は使用しない（背景が透明な場合も色として扱う）
 
-            const isWhite =
-                r > whiteThreshold && g > whiteThreshold && b > whiteThreshold;
+            // 知覚輝度: 「明るさ」の指標。R/G/Bを個別にしきい値判定すると、
+            // 撮影時の色カブリングでどれか1チャンネルだけ下回った際に白判定から漏れるため、
+            // 加重平均した明るさ1つで判定する
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            // 相対彩度（HSVのS）: 明るさに対する色ズレの「比率」。白判定専用。
+            // 絶対彩度（sat, 下記）と違い、明るいピクセルほど色ズレが目立つ、という
+            // 人間の感覚に近い形で「色カブリングの白」と「意図した薄い色」を区別できる
+            const relativeSaturation = maxC === 0 ? 0 : (maxC - minC) / maxC;
 
-            const sat = Math.max(r, g, b) - Math.min(r, g, b);
+            const isWhite =
+                luminance > whiteThreshold && relativeSaturation < whiteSaturationRatio;
+
+            // 絶対彩度: 白でないピクセルを「色として残すか、ノイズとして捨てるか」の判定用。
+            // こちらは今回のバグと無関係なので既存のロジックのまま変更しない
+            const sat = maxC - minC;
 
             if (isWhite) {
                 if (includeWhite) {
