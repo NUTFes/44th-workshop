@@ -80,6 +80,13 @@ func (uc *fireworkUsecase) GetFireworkByID(ctx context.Context, id int64) (opena
 		return openapi.FireworkResponse{}, fmt.Errorf("failed to retrieve firework: %w", err)
 	}
 
+	// mobile画面はQRコード経由でこのエンドポイントを直接叩く。isShareable=false（Private）の
+	// 花火は閲覧不可にするため、存在しない場合と同じ404を返す（レスポンスの違いでPrivateな
+	// 花火の存在自体を漏らさないようにする）。
+	if !fw.IsShareable {
+		return openapi.FireworkResponse{}, echo.NewHTTPError(http.StatusNotFound, "Firework not found")
+	}
+
 	var imageUrl *string
 	if fw.ImagePath != nil {
 		url := uc.storage.PublicURL(*fw.ImagePath)

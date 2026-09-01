@@ -10,6 +10,7 @@ interface FireworksListCardProps {
   filteredFireworks: Firework[];
   selectedFirework: Firework | null;
   deletingIds: Set<number>;
+  updatingIds: Set<number>;
   selectedDate: string;
   nextId: number;
   selectedFile: File | null;
@@ -18,6 +19,7 @@ interface FireworksListCardProps {
   onDateChange: (date: string) => void;
   onSelect: (firework: Firework) => void;
   onDelete: (id: number) => void;
+  onToggleShareable: (id: number, newIsShareable: boolean) => void;
   onEditedFile: (file: File) => void;
   onShareableChange: (checked: boolean) => void;
   onCreate: () => void;
@@ -29,6 +31,7 @@ export default function FireworksListCard({
   filteredFireworks,
   selectedFirework,
   deletingIds,
+  updatingIds,
   selectedDate,
   nextId,
   selectedFile,
@@ -37,6 +40,7 @@ export default function FireworksListCard({
   onDateChange,
   onSelect,
   onDelete,
+  onToggleShareable,
   onEditedFile,
   onShareableChange,
   onCreate,
@@ -98,8 +102,10 @@ export default function FireworksListCard({
               imageUrl={firework.imageUrl}
               isSelected={selectedFirework?.id === firework.id}
               isDeleting={deletingIds.has(firework.id)}
+              isUpdating={updatingIds.has(firework.id)}
               onSelect={onSelect}
               onDelete={onDelete}
+              onToggleShareable={onToggleShareable}
             />
           ))}
         </div>
