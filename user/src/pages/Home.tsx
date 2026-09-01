@@ -120,6 +120,7 @@ export default function Home() {
       resolution, // 画質設定（低32 / 中64 / 高128）
       whiteThreshold: 200,
       saturationThreshold: 30,
+      whiteSaturationRatio: 0.2,
       includeWhite: false,
     })
         .then((pd) => {
