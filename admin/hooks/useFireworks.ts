@@ -15,7 +15,7 @@ export function useFireworks() {
   const [error, setError] = useState<string | null>(null);
   const [selectedFirework, setSelectedFirework] = useState<Firework | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isShareable, setIsShareable] = useState(false);
+  const [isShareable, setIsShareable] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
@@ -276,7 +276,7 @@ export function useFireworks() {
 
       await fetchFireworks();
       setSelectedFile(null);
-      setIsShareable(false);
+      setIsShareable(true);
       setError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
