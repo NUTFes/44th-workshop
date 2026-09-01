@@ -233,6 +233,11 @@ const QRCodeComponent: FC<QRCodeProps> = ({
             const imageX = margin + keychainWidth + 10;
             const imageY = margin;
 
+            // アクリルキーホルダーへの挿入時にはカット誤差が出るため、切り取り線（点線）に
+            // ぴったり接する配置は避け、QR・画像の両方に同じ余白を確保する
+            // （印刷用HTML側の .qr-code-keychain / .image-keychain の padding: 2mm と揃えること）
+            const keychainPadding = 2;
+
             // 枠線を描画
             pdf.setDrawColor(150, 150, 150);
             pdf.setLineDashPattern([1, 1], 0);
@@ -246,7 +251,7 @@ const QRCodeComponent: FC<QRCodeProps> = ({
 
             // QRコードを配置（少し余白を持たせる）。縦横比を保ったまま余白付きの枠内に
             // 収まるサイズへ縮小し、中央寄せする（object-fit: contain と同じ考え方）
-            const qrPadding = 2;
+            const qrPadding = keychainPadding;
             const qrBoxWidth = keychainWidth - (qrPadding * 2);
             const qrBoxHeight = keychainHeight - (qrPadding * 2);
             // サイズ測定に失敗しても致命的ではないため、その場合は歪みには目をつぶり
@@ -265,15 +270,21 @@ const QRCodeComponent: FC<QRCodeProps> = ({
                 qrFit.height
             );
 
-            // 画像を配置
+            // 画像を配置（QRコードと同じく余白を確保した枠内に収める。枠いっぱいに配置すると
+            // 正方形いっぱいに描かれた絵が切り取り線に接し、はみ出して見えるため）
+            const imageBoxWidth = keychainWidth - (keychainPadding * 2);
+            const imageBoxHeight = keychainHeight - (keychainPadding * 2);
             if (transparentImageDataUrl) {
                 try {
                     // 透過PNGの縦横比を保ったまま枠内に収め、中央寄せする
                     const imgDims = await getImageDimensions(transparentImageDataUrl);
-                    const imgFit = fitContain(keychainWidth, keychainHeight, imgDims.width, imgDims.height);
+                    if (!(imgDims.width > 0) || !(imgDims.height > 0)) {
+                        throw new Error(`画像の寸法が不正です: ${imgDims.width}x${imgDims.height}`);
+                    }
+                    const imgFit = fitContain(imageBoxWidth, imageBoxHeight, imgDims.width, imgDims.height);
                     pdf.addImage(transparentImageDataUrl, 'PNG',
-                        imageX + imgFit.x,
-                        imageY + imgFit.y,
+                        imageX + keychainPadding + imgFit.x,
+                        imageY + keychainPadding + imgFit.y,
                         imgFit.width,
                         imgFit.height
                     );
@@ -380,27 +391,32 @@ const QRCodeComponent: FC<QRCodeProps> = ({
         .keychain-item {
             width: 45mm;
             height: 32mm;
+            /* border を含めて 45×32mm にする。content-box のままだと枠線が実寸より
+               外側にはみ出し、PDF側の pdf.rect(45, 32) と切り取り線のサイズがずれる */
+            box-sizing: border-box;
             position: absolute;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px dashed black;
         }
-        
+
         .qr-item {
             top: 10mm;
             left: 10mm;
         }
-        
+
         .image-item {
             top: 10mm;
             left: 65mm;
         }
-        
+
         .image-keychain {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            /* 切り取り線に接しないよう、PDF側の keychainPadding と同じ余白を確保する */
+            padding: 2mm;
             box-sizing: border-box;
         }
 
