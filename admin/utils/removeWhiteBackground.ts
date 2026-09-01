@@ -7,12 +7,28 @@ export interface BackgroundRemovalOptions {
   whiteSaturationRatio?: number;
   /** これ未満の絶対彩度を無彩色ノイズとして除外する */
   saturationThreshold?: number;
+  /**
+   * 画像端に連結した領域を透明化する際、この明るさ未満の画素は色を問わず
+   * 透明化の対象外にする（＝画像の端いっぱいまで描かれた濃い色のインクを守る）
+   */
+  floodLuminanceThreshold?: number;
+  /**
+   * 画像端に連結した領域を透明化する際、この絶対彩度以上の画素は
+   * 透明化の対象外にする（＝画像の端いっぱいまで描かれた鮮やかな色のインクを守る）
+   */
+  floodSaturationThreshold?: number;
 }
 
 const DEFAULT_OPTIONS: Required<BackgroundRemovalOptions> = {
   whiteThreshold: 200,
   whiteSaturationRatio: 0.2,
   saturationThreshold: 30,
+  // テスト用画像 white-background-removal-color-cast.jpg の照明カブリング
+  // （画像端で最大 彩度67 / 輝度190〜225程度）は透明化できる一方、
+  // 花火として描かれる濃い色のインク（彩度90以上が大半）は画像の端まで
+  // 描かれていても透明化されずに残る値を選んでいる
+  floodLuminanceThreshold: 140,
+  floodSaturationThreshold: 90,
 };
 
 /**
@@ -39,13 +55,45 @@ export function isBackgroundPixel(
 }
 
 /**
+ * 画像端に連結した不透明領域のうち、色を問わず透明化してよいほど
+ * 「背景らしい」画素かどうかを判定する（isBackgroundPixel より緩い基準）。
+ *
+ * 白判定から漏れた照明の色かぶりや影は、明るく・彩度が低いという特徴を持つ。
+ * 一方、正方形いっぱいに描かれた花火のインクは画像の端まで達することがあるが、
+ * 彩度が高い、または暗いという特徴で区別できる。この関数は「明るく、かつ彩度が
+ * 低い」画素だけを背景とみなすことで、画像端に達しているインクを誤って
+ * 透明化しないようにする（issue #51: 印刷時に絵の端が消える問題への対応）。
+ */
+function isFloodableBackground(
+  r: number,
+  g: number,
+  b: number,
+  options: Required<BackgroundRemovalOptions>
+): boolean {
+  if (isBackgroundPixel(r, g, b, options)) return true;
+
+  const maxC = Math.max(r, g, b);
+  const minC = Math.min(r, g, b);
+  const saturation = maxC - minC;
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+  return (
+    luminance > options.floodLuminanceThreshold &&
+    saturation < options.floodSaturationThreshold
+  );
+}
+
+/**
  * 白判定から漏れた照明の色かぶりや影は、通常は用紙の外周へつながっている。
- * 一次判定後も画像端へつながっている不透明領域を背景として透明化する。
+ * 一次判定後も画像端へつながっている「背景らしい」領域を透明化する。
+ * 色を問わず透明化すると、画像の端いっぱいまで描かれたインクまで消えてしまうため、
+ * isFloodableBackground で背景らしいと判定された画素だけを対象にする。
  */
 function removeEdgeConnectedBackground(
   pixels: Uint8ClampedArray,
   width: number,
-  height: number
+  height: number,
+  options: Required<BackgroundRemovalOptions>
 ): void {
   const queue = new Int32Array(width * height);
   let readIndex = 0;
@@ -54,6 +102,18 @@ function removeEdgeConnectedBackground(
   const enqueueOpaquePixel = (pixelIndex: number) => {
     const alphaIndex = pixelIndex * 4 + 3;
     if (pixels[alphaIndex] === 0) return;
+
+    const colorIndex = pixelIndex * 4;
+    if (
+      !isFloodableBackground(
+        pixels[colorIndex],
+        pixels[colorIndex + 1],
+        pixels[colorIndex + 2],
+        options
+      )
+    ) {
+      return;
+    }
 
     // enqueueと同時に透明化し、同じ画素を再登録しないためのvisitedとしても使う。
     pixels[alphaIndex] = 0;
@@ -120,7 +180,7 @@ export async function removeWhiteBackground(
     }
   }
 
-  removeEdgeConnectedBackground(pixels, canvas.width, canvas.height);
+  removeEdgeConnectedBackground(pixels, canvas.width, canvas.height, resolvedOptions);
 
   context.putImageData(imageData, 0, 0);
   return canvas.toDataURL('image/png');
