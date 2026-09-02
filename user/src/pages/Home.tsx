@@ -153,9 +153,16 @@ export default function Home() {
 
   const isReady = !!particleData && !isConverting;
   const currentQualityIndex = QUALITY_LEVELS.findIndex((level) => level.resolution === resolution);
+  // 読み込みが完了した上で、実際にエラーだった場合か imageUrl が無い（旧レコード）場合だけを
+  // 「読み込み失敗」とする。以前は `!showLaunchButton`（= isLoading・isConverting・isReady が
+  // すべて false）から失敗を導出していたが、isConverting はデータ取得後の別のuseEffectで
+  // 非同期に true になるため、そのuseEffectが走る前の一瞬「読み込み中でも変換中でも完了でも
+  // ない」状態を通過してしまい、成功時にも誤って読み込み失敗と判定されていた（結果、設定
+  // パネルが自動で開いたまま戻らなくなっていた）。isLoading/error/data という
+  // react-queryが直接管理する値だけから判定することで、このタイミング依存を無くす
+  const hasLoadFailed = !isLoading && (!!error || (!!data && !data.imageUrl));
   // 読み込み中・変換中も打ち上げボタンを表示したまま disabled にし、パネルの高さが変わらないようにする
-  const showLaunchButton = isLoading || isConverting || isReady;
-  const hasLoadFailed = !showLaunchButton;
+  const showLaunchButton = !hasLoadFailed;
 
   // 読み込みに失敗したときは、QRコードをスキャンをすぐ押せるようパネルを自動で開く
   useEffect(() => {

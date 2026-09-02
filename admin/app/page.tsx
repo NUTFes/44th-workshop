@@ -31,6 +31,7 @@ export default function Home() {
             filteredFireworks={f.filteredFireworks}
             selectedFirework={f.selectedFirework}
             deletingIds={f.deletingIds}
+            updatingIds={f.updatingIds}
             selectedDate={f.selectedDate}
             nextId={f.nextId}
             selectedFile={f.selectedFile}
@@ -39,6 +40,7 @@ export default function Home() {
             onDateChange={f.setSelectedDate}
             onSelect={f.selectFirework}
             onDelete={f.deleteFirework}
+            onToggleShareable={f.updateFireworkShareable}
             onEditedFile={f.setSelectedFile}
             onShareableChange={f.setIsShareable}
             onCreate={f.createFirework}
