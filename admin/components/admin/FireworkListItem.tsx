@@ -7,8 +7,10 @@ interface FireworkListItemProps {
   imageUrl: string | null;
   isSelected: boolean;
   isDeleting: boolean;
+  isUpdating: boolean;
   onSelect: (firework: Firework) => void;
   onDelete: (id: number) => void;
+  onToggleShareable: (id: number, newIsShareable: boolean) => void;
 }
 
 export default function FireworkListItem({
@@ -16,8 +18,10 @@ export default function FireworkListItem({
   imageUrl,
   isSelected,
   isDeleting,
+  isUpdating,
   onSelect,
   onDelete,
+  onToggleShareable,
 }: FireworkListItemProps) {
   return (
     <div
@@ -41,9 +45,22 @@ export default function FireworkListItem({
           🎆 花火 #{firework.id}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-          <span style={statusBadgeStyle(firework.isShareable)}>
-            {firework.isShareable ? '🌐 Shareable' : '🔒 Private'}
-          </span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleShareable(firework.id, !firework.isShareable);
+            }}
+            disabled={isUpdating}
+            style={{
+              ...statusBadgeStyle(firework.isShareable),
+              border: 'none',
+              cursor: isUpdating ? 'not-allowed' : 'pointer',
+              opacity: isUpdating ? 0.6 : 1,
+            }}
+            title={firework.isShareable ? 'クリックして非公開にする' : 'クリックして公開する'}
+          >
+            {isUpdating ? '⏳ 更新中...' : firework.isShareable ? '🌐 Shareable' : '🔒 Private'}
+          </button>
           <span style={{ fontSize: '0.75rem', color: '#718096', minWidth: '6rem' }}>
             📅 {firework.createdAt ? new Date(firework.createdAt).toLocaleDateString() : 'N/A'}
           </span>
