@@ -8,6 +8,18 @@ export interface BackgroundRemovalOptions {
   /** これ未満の絶対彩度を無彩色ノイズとして除外する */
   saturationThreshold?: number;
   /**
+   * 黒インクとみなす知覚輝度のしきい値（0〜255）。絶対彩度が低い画素は無彩色ノイズとして
+   * 透明化されるが、黒インクも絶対彩度がほぼ0のため同じ判定に埋もれてしまう。この値以下の
+   * 暗い画素は、彩度が低くても意図して描かれた黒インクとして常に透明化しない。
+   *
+   * 小さい/細い黒インクは、実際の撮影で生じるピンボケ・手ブレ・JPEG圧縮により、
+   * 元の画素の時点で既に薄い（明るい）グレーへ滲んでいることがある。テスト用画像
+   * white-background-removal-color-cast.jpg で実測した影・照明カブリングの輝度は
+   * 最低でも約130（ほぼ全域が140以上）のため、120まで引き上げても影を誤って
+   * 拾うことはなく、より薄まった小さな黒インクまで拾えるようにしている。
+   */
+  blackLuminanceThreshold?: number;
+  /**
    * 画像端に連結した領域を透明化する際、この明るさ未満の画素は色を問わず
    * 透明化の対象外にする（＝画像の端いっぱいまで描かれた濃い色のインクを守る）
    */
@@ -23,6 +35,11 @@ const DEFAULT_OPTIONS: Required<BackgroundRemovalOptions> = {
   whiteThreshold: 200,
   whiteSaturationRatio: 0.2,
   saturationThreshold: 30,
+  // テスト用画像 white-background-removal-color-cast.jpg の影・照明カブリングは
+  // 実測で最低輝度約130（ほぼ全域が140以上）のため、120までは誤って拾わない。
+  // 一方、ピンボケ・手ブレ・JPEG圧縮で薄まった小さな黒インクは輝度100〜150程度まで
+  // 明るくなることがあるため、120まで引き上げてより多くの黒インクを拾えるようにしている
+  blackLuminanceThreshold: 120,
   // テスト用画像 white-background-removal-color-cast.jpg の照明カブリング
   // （画像端で最大 彩度67 / 輝度190〜225程度）は透明化できる一方、
   // 花火として描かれる濃い色のインク（彩度90以上が大半）は画像の端まで
@@ -51,7 +68,14 @@ export function isBackgroundPixel(
     luminance > options.whiteThreshold &&
     relativeSaturation < options.whiteSaturationRatio;
 
-  return isWhite || saturation < options.saturationThreshold;
+  // 絶対彩度が低くても、暗い（黒に近い）画素は意図して描かれた黒インクとして残す。
+  // 黒インクは白インクと同様に彩度がほぼ0になるため、彩度だけで判定すると
+  // 影・照明カブリングと区別できず透明化されてしまう。
+  const isAchromaticNoise =
+    saturation < options.saturationThreshold &&
+    luminance > options.blackLuminanceThreshold;
+
+  return isWhite || isAchromaticNoise;
 }
 
 /**
