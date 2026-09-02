@@ -8,11 +8,16 @@ export interface ImageToParticlesOptions {
     /** 彩度しきい値 max-min（デフォルト: 30）これ未満はノイズとして除外 */
     saturationThreshold?: number;
     /**
-     * 黒インクとみなす知覚輝度のしきい値 0〜255（デフォルト: 60）。
+     * 黒インクとみなす知覚輝度のしきい値 0〜255（デフォルト: 120）。
      * 絶対彩度が低い画素はここで無彩色ノイズ扱いになるが、黒インクも絶対彩度が
      * ほぼ0のため同じ判定に埋もれてしまう。この値以下の暗い画素は、彩度が低くても
-     * 意図して描かれた黒インクとして常に残す（影・照明カブリングは輝度140以上、
-     * 黒インクは輝度0〜数十程度と大きく差があるため、輝度で区別できる）。
+     * 意図して描かれた黒インクとして常に残す。
+     *
+     * 小さい/細い黒インクは、実際の撮影で生じるピンボケ・手ブレ・JPEG圧縮により、
+     * 縮小前の時点で既に薄い（明るい）グレーへ滲んでいることがある。テスト用画像
+     * white-background-removal-color-cast.jpg で実測した影・照明カブリングの
+     * 輝度は最低でも約130（ほぼ全域が140以上）のため、120まで引き上げても
+     * 影を誤って拾うことはなく、より薄まった小さな黒インクまで拾えるようにしている。
      */
     blackLuminanceThreshold?: number;
     /**
@@ -46,7 +51,7 @@ export async function imageUrlToParticles(
         resolution = 64,
         whiteThreshold = 200,
         saturationThreshold = 30,
-        blackLuminanceThreshold = 60,
+        blackLuminanceThreshold = 120,
         whiteSaturationRatio = 0.2,
         includeWhite = false,
     } = options;
