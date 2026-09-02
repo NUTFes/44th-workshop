@@ -8,6 +8,14 @@ export interface ImageToParticlesOptions {
     /** 彩度しきい値 max-min（デフォルト: 30）これ未満はノイズとして除外 */
     saturationThreshold?: number;
     /**
+     * 黒インクとみなす知覚輝度のしきい値 0〜255（デフォルト: 60）。
+     * 絶対彩度が低い画素はここで無彩色ノイズ扱いになるが、黒インクも絶対彩度が
+     * ほぼ0のため同じ判定に埋もれてしまう。この値以下の暗い画素は、彩度が低くても
+     * 意図して描かれた黒インクとして常に残す（影・照明カブリングは輝度140以上、
+     * 黒インクは輝度0〜数十程度と大きく差があるため、輝度で区別できる）。
+     */
+    blackLuminanceThreshold?: number;
+    /**
      * 白判定用の相対彩度（HSVのS = (max-min)/max）しきい値 0〜1（デフォルト: 0.2）。
      * 値を上げるほど、写真撮影した白紙の照明カブリング（暖色/寒色寄りの白）を
      * 白として除外しやすくなる代わり、淡いパステルカラーのインクも白として
@@ -33,6 +41,7 @@ export async function imageUrlToParticles(
         resolution = 64,
         whiteThreshold = 200,
         saturationThreshold = 30,
+        blackLuminanceThreshold = 60,
         whiteSaturationRatio = 0.2,
         includeWhite = false,
     } = options;
@@ -41,6 +50,7 @@ export async function imageUrlToParticles(
     const particles = extractParticles(pixels, resolution, {
         whiteThreshold,
         saturationThreshold,
+        blackLuminanceThreshold,
         whiteSaturationRatio,
         includeWhite,
     });
@@ -99,6 +109,7 @@ async function fetchResizedPixels(
 interface FilterOptions {
     whiteThreshold: number;
     saturationThreshold: number;
+    blackLuminanceThreshold: number;
     whiteSaturationRatio: number;
     includeWhite: boolean;
 }
@@ -109,7 +120,7 @@ function extractParticles(
     n: number,
     opts: FilterOptions
 ): ColorParticle[] {
-    const { whiteThreshold, saturationThreshold, whiteSaturationRatio, includeWhite } = opts;
+    const { whiteThreshold, saturationThreshold, blackLuminanceThreshold, whiteSaturationRatio, includeWhite } = opts;
     const particles: ColorParticle[] = [];
 
     for (let py = 0; py < n; py++) {
@@ -136,7 +147,6 @@ function extractParticles(
                 luminance > whiteThreshold && relativeSaturation < whiteSaturationRatio;
 
             // 絶対彩度: 白でないピクセルを「色として残すか、ノイズとして捨てるか」の判定用。
-            // こちらは今回のバグと無関係なので既存のロジックのまま変更しない
             const sat = maxC - minC;
 
             if (isWhite) {
@@ -151,7 +161,11 @@ function extractParticles(
                     });
                 }
             } else {
-                if (sat >= saturationThreshold) {
+                // 絶対彩度が低くても、暗い（黒に近い）画素は意図して描かれた黒インクとして
+                // 残す。黒インクは白インクと同様に彩度がほぼ0になるため、彩度だけで
+                // 判定すると影・照明カブリングと区別できず消えてしまう。
+                const isBlackInk = luminance <= blackLuminanceThreshold;
+                if (sat >= saturationThreshold || isBlackInk) {
                     particles.push({
                         x: px / (n - 1),
                         y: 1 - py / (n - 1),
